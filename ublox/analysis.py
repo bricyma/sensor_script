@@ -67,11 +67,14 @@ def compare():
 def plot():
     # plt.plot(ublox_t, 'y', label='ublox time')
     # plt.plot(novatel_t, 'r', label='novatel time')
+    y2 = [3] * len(diff)
+
+    plt.plot(y2, 'r', label='limit')
     plt.plot(diff, 'b', label='difference')
     plt.legend(loc='upper left')
     plt.xlabel('stamp')
     plt.ylabel('position accuracy(m)')
-    plt.title("the Accuracy of GPS 2d Position")
+    plt.title("the Accuracy of Ublox EVK-M8U GPS 2d Position")
     plt.show()
 
 
