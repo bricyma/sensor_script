@@ -1,12 +1,14 @@
 import os
+import sys
 from collections import defaultdict
 
 
 class RecordCheck:
     def __init__(self):
-        self.bag_file = 'b.txt'
-        self.config_file = 'test.csv'
-        self.input_file = open(self.bag_file, 'r')
+        self.rosbagpath = sys.argv[1]  # /mnt/scratch/datasets/2017-05-22/20170522131932
+        self.rosinfo_file = self.rosbagpath[-14:] + '.txt'  #20170522131932.txt
+        self.config_file = 'heartbeat_config.csv'
+        self.input_file = ''
         self.topic_flag = 0
         self.duration = 0
         self.topic_num = 0
@@ -17,12 +19,17 @@ class RecordCheck:
         self.topics = []
         self.sensor_dict = {}  # topic: sensor
         self.delta = 0.1
+        self.signal_dict = {1:'ok', 2:'higher', -1:'lower'}  #1, meets the requirement; 2, higher than requirement; 3, lower than requirement
 
     def get_topic(self):
         for line in self.input_file:
             l = line.split(':')
             if l[0] == 'duration':
-                self.duration = float(l[1].strip()[:-1])
+                # l: 'duration:    4:54s (294s)'
+                print line.split('(')[1][:-3]
+                self.duration = float(line.split('(')[1][:-3])
+
+                # self.duration = float(l[1].strip()[:-1])
             if l[0] == 'topics':
                 self.topic_flag = 1
             if self.topic_flag:
@@ -64,18 +71,24 @@ class RecordCheck:
 
     def compare(self, cur, frequency):
         # cur: current; req: required
+        # 1, meets the requirement; 2, higher than requirement; 3, lower than requirement
         if self.duration * frequency * (1 - self.delta) < cur < self.duration * frequency * (1 + self.delta):
             return 1
+        elif cur > self.duration * frequency * (1 + self.delta):
+            return 2
         else:
-            return 0
+            return -1
 
     def show(self):
         for topic in self.topic_res:
-            print topic, self.topic_res[topic], self.sensor_dict[topic]
+            print "%-10s %-50s %s" % ( self.sensor_dict[topic], topic, self.signal_dict[self.topic_res[topic]])
 
     # create rosbag info txt
     def createtxt(self):
-        os.system('rosbag info 2017-05-26-00-02-25.bag > aaac.txt')
+        print 'create rosbag info txt'
+        # os.system('rosbag info /home/zhibei/workspace/rosbag/2017-05-22-14-23-01.bag > b.txt')
+        os.system('rosbag info ' + self.rosbagpath + '/*.bag >' + self.rosinfo_file)
+        self.input_file = open(self.rosinfo_file, 'r')
 
     def run(self):
         self.createtxt()
