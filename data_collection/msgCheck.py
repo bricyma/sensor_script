@@ -14,12 +14,12 @@ class RecordCheck:
         self.topic_num = 0
         self.topic_msg_dict = {}  # topic, real msg number in rosbag
         self.topic_info_dict = {}  # topic, expected msg number
-        self.topic_res = {} # topic, whether or not msg number meets the requirement
+        self.topic_res = {}  # topic, whether or not msg number meets the requirement
         self.config = defaultdict(dict)
         self.topics = []
         self.sensor_dict = {}  # topic: sensor
         self.delta = 0.1
-        self.signal_dict = {1:'ok', 2:'higher', -1:'lower'}  #1, meets the requirement; 2, higher than requirement; 3, lower than requirement
+        self.signal_dict = {1: 'ok', 2: 'higher', -1: 'lower'}  # 1, meets the requirement; 2, higher than requirement; 3, lower than requirement
 
     def get_topic(self):
         for line in self.input_file:
@@ -80,8 +80,13 @@ class RecordCheck:
             return -1
 
     def show(self):
-        for topic in self.topic_res:
-            print "%-10s %-50s %s" % ( self.sensor_dict[topic], topic, self.signal_dict[self.topic_res[topic]])
+        # for topic in self.topic_res:
+        #     print "%-10s %-50s %s" % (self.sensor_dict[topic], topic, self.signal_dict[self.topic_res[topic]])
+
+        # print in order of topics
+        for topic in self.topics:
+            if topic in self.topic_res:
+                print "%-10s %-50s %s" % (self.sensor_dict[topic], topic, self.signal_dict[self.topic_res[topic]])
 
     # create rosbag info txt
     def createtxt(self):
