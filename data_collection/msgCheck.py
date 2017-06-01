@@ -19,19 +19,22 @@ class RecordCheck:
         self.topics = []
         self.sensor_dict = {}  # topic: sensor
         self.delta = 0.1
-        self.signal_dict = {1: 'ok', 2: 'higher', -1: 'lower'}  # 1, meets the requirement; 2, higher than requirement; 3, lower than requirement
+        self.signal_dict = {1: 'ok', 2: 'higher', -1: 'lower', 0: 'none'}  #1, meets the requirement; 2, higher than requirement; 3, lower than requirement
 
     def get_topic(self):
         for line in self.input_file:
             l = line.split(':')
             if l[0] == 'duration':
-                # l: 'duration:    4:54s (294s)'
-                print line.split('(')[1][:-3]
-                self.duration = float(line.split('(')[1][:-3])
+                # line: 'duration:    47.0s'
+                if line.strip()[-1] == 's':
+                    self.duration = float(line.split(':')[1].strip()[:-1])
+                else:
+                    # l: 'duration:    4:54s (294s)'
+                    self.duration = float(line.split('(')[1][:-3])
 
-                # self.duration = float(l[1].strip()[:-1])
             if l[0] == 'topics':
                 self.topic_flag = 1
+
             if self.topic_flag:
                 if self.topic_num == 0:
                     topic_msg = l[1].strip()
@@ -48,6 +51,10 @@ class RecordCheck:
                 self.topic_msg_dict[topic] = topic_msg_num
                 self.topic_num += 1
 
+        # remove rosbag_info.txt
+        os.system('rm ' + self.rosbagpath[-14:] + '.txt')
+
+
     def read_config(self):
         with open(self.config_file) as f:
             for line in f:
@@ -58,7 +65,8 @@ class RecordCheck:
                 self.config[sensor][topic] = (int(fields[2]), check_flag)
                 self.sensor_dict[topic] = sensor
                 self.topic_info_dict[topic] = int(fields[2])
-                self.topics.append((sensor, topic))
+                if fields[3] == 'T':
+                    self.topics.append(topic)
 
     def check_msg(self):
         # sensor: 'Lidar'
@@ -66,7 +74,10 @@ class RecordCheck:
             # topic: 'velodyne/packet'
             for topic in self.config[sensor]:
                 if self.config[sensor][topic][1]:
-                    flag = self.compare(self.topic_msg_dict[topic], self.topic_info_dict[topic])
+                    if topic in self.topic_msg_dict:
+                        flag = self.compare(self.topic_msg_dict[topic], self.topic_info_dict[topic])
+                    else:
+                        flag = 0
                     self.topic_res[topic] = flag
 
     def compare(self, cur, frequency):
@@ -80,13 +91,9 @@ class RecordCheck:
             return -1
 
     def show(self):
-        # for topic in self.topic_res:
-        #     print "%-10s %-50s %s" % (self.sensor_dict[topic], topic, self.signal_dict[self.topic_res[topic]])
-
-        # print in order of topics
         for topic in self.topics:
-            if topic in self.topic_res:
-                print "%-10s %-50s %s" % (self.sensor_dict[topic], topic, self.signal_dict[self.topic_res[topic]])
+            # if topic in self.topic_res:
+            print "%-10s %-50s %s" % (self.sensor_dict[topic], topic, self.signal_dict[self.topic_res[topic]])
 
     # create rosbag info txt
     def createtxt(self):
