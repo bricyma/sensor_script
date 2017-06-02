@@ -1,5 +1,4 @@
 #!/usr/bin/env python
-from vsimple.map import Map
 import numpy as np
 import sys
 import math as m
