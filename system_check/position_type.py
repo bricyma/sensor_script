@@ -11,7 +11,8 @@ class PosType:
         bag_path = '../../rosbag/'
         self.bagname = []
         self.bagname.append(bag_path + sys.argv[1])
-        self.bagname.append(bag_path + sys.argv[2])
+        if len(sys.argv) >= 3:
+            self.bagname.append(bag_path + sys.argv[2])
         self.bag = []
         for bag in self.bagname:
             self.bag.append(rosbag.Bag(bag))
@@ -20,13 +21,17 @@ class PosType:
         self.postype2 = [] # bag2 position type
         self.posacc2 = []  # bag2 position accuracy
 
-        self.altitude_std1 = [] # bag1 altitude standard accuracy
+        self.altitude_std1 = []  # bag1 altitude standard accuracy
         self.altitude_std2 = []  # bag2 altitude standard accuracy
 
+        self.azimuth_std1 = []  # bag1 yaw angle accuracy
+        self.azimuth_std2 = []  # bag2 yaw angle accuracy
         self.satellite_used = []  # satellites used in solution
         self.satellite1 = []
         self.satellite2 = []
+
         self.index = [0, 0]
+
     def readbag(self, flag):
         # flag == 1, bestpos
         # flag == 0, inspvax
@@ -46,40 +51,51 @@ class PosType:
                         self.posacc1.append(m.sqrt(msg.latitude_std ** 2 + msg.longitude_std ** 2))
                         self.postype1.append(msg.position_type)
                         self.altitude_std1.append(msg.altitude_std)
+                        self.azimuth_std1.append(msg.azimuth_std)
                 else:
                     if self.index[1] > 15000:
                         self.posacc2.append(m.sqrt(msg.latitude_std ** 2 + msg.longitude_std ** 2))
                         self.postype2.append(msg.position_type)
                         self.altitude_std2.append(msg.altitude_std)
+                        self.azimuth_std2.append(msg.azimuth_std)
 
             count += 1
             bag.close()
 
     def plot(self):
-        plt.subplot(411)
+        plt.subplot(511)
         plt.plot(self.postype1, 'r')
         plt.plot(self.postype2, 'b')
 
         plt.title("Position Type")
 
-        plt.subplot(412)
+        plt.subplot(512)
         plt.plot(self.posacc1, 'r', label='bag1 2d position accuracy')
         plt.plot(self.posacc2, 'b', label='bag2 2d position accuracy')
         # plt.plot([np.mean(self.posacc1)] * len(self.posacc1), 'r', linestyle='-', linewidth=3, label='average')
         # plt.plot([np.mean(self.posacc2)] * len(self.posacc2), 'r', linestyle='-', linewidth=3, label='average')
         plt.title("INSPVAX 2d Horizontal Position Accuracy")
         plt.legend(loc='upper left')
-        plt.subplot(413)
+        plt.subplot(513)
         plt.plot(self.altitude_std1, 'r', label='bag1 vertical position accuracy')
         plt.plot(self.altitude_std2, 'b', label='bag2 vertical position accuracy')
         plt.legend(loc='upper left')
         plt.title("INSPVAX Vertical Position Accuracy")
 
-        plt.subplot(414)
+        plt.subplot(514)
         plt.plot(self.satellite1, 'r', label='bag1 satellites')
         plt.plot(self.satellite2, 'b', label='bag2 satellites')
         plt.legend(loc='upper left')
         plt.title("Satellites used in solution")
+
+        plt.subplot(515)
+        plt.plot(self.azimuth_std1, 'r', label='bag1 azimuth without velodyne and camera')
+        plt.plot(self.altitude_std2, 'b', label='bag2 azimuth with velodyne and camera')
+        plt.legend(loc='upper left')
+        plt.xlabel('stamp')
+        plt.ylabel('degree')
+        plt.title("Heading accuracy ")
+
 
         plt.show()
 
