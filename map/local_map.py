@@ -1,4 +1,4 @@
-## Plot the Novatel BESTPOS's position type and position accuracy together
+# x, y looks really weird
 import rosbag
 import math
 import matplotlib.pyplot as plt
