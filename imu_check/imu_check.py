@@ -211,17 +211,20 @@ def plot_pitch():
     plt.plot(id, yaw)
     plt.show()
 
+
 def plot_velocity():
     plt.title('velocity')
     plt.plot(id, absolute_vel, 'r')
     plt.plot(vehicle_id, vehicle_vel)
-
     plt.plot(id, gps_v, 'g')
     plt.show()
 
+
 def plot_orientation():
-    plt.plot(id, yaw)
-    plt.plot(id, ori_vel)
+    plt.plot(id, yaw, 'r', label='yaw')
+    plt.plot(id, ori_vel, 'g', label='velocity orientation')
+    plt.legend(loc='upper left')
+
     plt.show()
 
 read_data()
@@ -238,4 +241,3 @@ method2()
 # plot_pitch()
 # plot_velocity()
 plot_orientation()
-print 'finish'
