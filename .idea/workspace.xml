@@ -1,9 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <project version="4">
   <component name="ChangeListManager">
-    <list default="true" id="4ab7e552-b7f2-470e-86e8-6c5a784b5bb0" name="Default" comment="">
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/imu_check/imu_check.py" afterPath="$PROJECT_DIR$/imu_check/imu_check.py" />
-    </list>
+    <list default="true" id="4ab7e552-b7f2-470e-86e8-6c5a784b5bb0" name="Default" comment="" />
     <option name="EXCLUDED_CONVERTED_TO_IGNORED" value="true" />
     <option name="TRACKING_ENABLED" value="true" />
     <option name="SHOW_DIALOG" value="false" />
@@ -17,16 +15,6 @@
   </component>
   <component name="FileEditorManager">
     <leaf SIDE_TABS_SIZE_LIMIT_KEY="300">
-      <file leaf-file-name="imu_data.txt" pinned="false" current-in-tab="false">
-        <entry file="file://$PROJECT_DIR$/rawdata/imu_data.txt">
-          <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="0">
-              <caret line="0" column="0" lean-forward="false" selection-start-line="0" selection-start-column="0" selection-end-line="0" selection-end-column="0" />
-              <folding />
-            </state>
-          </provider>
-        </entry>
-      </file>
       <file leaf-file-name="imu_acc.py" pinned="false" current-in-tab="false">
         <entry file="file://$PROJECT_DIR$/rawdata/imu_acc.py">
           <provider selected="true" editor-type-id="text-editor">
@@ -51,13 +39,25 @@
           </provider>
         </entry>
       </file>
-      <file leaf-file-name="orientation.py" pinned="false" current-in-tab="true">
+      <file leaf-file-name="orientation.py" pinned="false" current-in-tab="false">
         <entry file="file://$PROJECT_DIR$/imu_check/orientation.py">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="63">
-              <caret line="3" column="0" lean-forward="true" selection-start-line="3" selection-start-column="0" selection-end-line="3" selection-end-column="0" />
+            <state relative-caret-position="777">
+              <caret line="37" column="0" lean-forward="true" selection-start-line="0" selection-start-column="0" selection-end-line="66" selection-end-column="0" />
               <folding>
                 <element signature="e#70#101#0" expanded="true" />
+              </folding>
+            </state>
+          </provider>
+        </entry>
+      </file>
+      <file leaf-file-name="sample.py" pinned="false" current-in-tab="true">
+        <entry file="file://$PROJECT_DIR$/test/sample.py">
+          <provider selected="true" editor-type-id="text-editor">
+            <state relative-caret-position="609">
+              <caret line="29" column="0" lean-forward="true" selection-start-line="29" selection-start-column="0" selection-end-line="29" selection-end-column="0" />
+              <folding>
+                <element signature="e#59#90#0" expanded="true" />
               </folding>
             </state>
           </provider>
@@ -175,6 +175,7 @@
         <option value="$PROJECT_DIR$/map/local_map.py" />
         <option value="$PROJECT_DIR$/imu_check/imu_check.py" />
         <option value="$PROJECT_DIR$/imu_check/orientation.py" />
+        <option value="$PROJECT_DIR$/test/sample.py" />
       </list>
     </option>
   </component>
@@ -592,7 +593,6 @@
     <watches-manager />
   </component>
   <component name="editorHistoryManager">
-    <entry file="file://$PROJECT_DIR$/data_collection/test.csv" />
     <entry file="file://$PROJECT_DIR$/data_collection/heartbeat_config.csv">
       <provider selected="true" editor-type-id="text-editor">
         <state relative-caret-position="608">
@@ -965,10 +965,20 @@
     </entry>
     <entry file="file://$PROJECT_DIR$/imu_check/orientation.py">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="63">
-          <caret line="3" column="0" lean-forward="true" selection-start-line="3" selection-start-column="0" selection-end-line="3" selection-end-column="0" />
+        <state relative-caret-position="777">
+          <caret line="37" column="0" lean-forward="true" selection-start-line="0" selection-start-column="0" selection-end-line="66" selection-end-column="0" />
           <folding>
             <element signature="e#70#101#0" expanded="true" />
+          </folding>
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/test/sample.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="609">
+          <caret line="29" column="0" lean-forward="true" selection-start-line="29" selection-start-column="0" selection-end-line="29" selection-end-column="0" />
+          <folding>
+            <element signature="e#59#90#0" expanded="true" />
           </folding>
         </state>
       </provider>
