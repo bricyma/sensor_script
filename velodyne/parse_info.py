@@ -19,7 +19,7 @@ def read_data():
     for x in bag.read_messages(topics=['/rosout']):
         total_msg = x[1]
         num += 1
-        if num % 10000 != 0 or total_msg.name.strip() != '/velodyne_nodelet_manager':
+        if num % 10 != 0 or total_msg.name.strip() != '/velodyne_nodelet_manager':
             continue
         msg = total_msg.msg
 

@@ -12,6 +12,12 @@ class PosType:
         bag_path = '../../rosbag/'
         bagname = bag_path + sys.argv[1]
         self.bag = rosbag.Bag(bagname)
+        self.ppppos_x = []
+        self.ppppos_y = []
+
+        self.rtkpos_x = []
+        self.rtkpos_y = []
+
         self.bestpos_x = []
         self.bestpos_y = []
         self.inspos_x = []
@@ -21,12 +27,34 @@ class PosType:
         self.distance = []
         self.baseLat = self.DEG2RAD(32.694052)
         self.baseLon = self.DEG2RAD(-113.958389)
-
+        self.limit = 5000000
     def readbag(self):
+        count = 0
+        for topic, msg, t in self.bag.read_messages(topics=['/novatel_data/ppppos']):
+            count += 1
+            if count > self.limit:
+                break
+            if msg.header.gps_week_seconds % 100 == 0:
+                x, y = self.latlon2xy(msg.latitude, msg.longitude)
+                self.ppppos_x.append(x)
+                self.ppppos_y.append(y)
+                # self.bestpos_time.append(msg.header.gps_week_seconds)
+        cur = 0
+        count = 0
+        for topic, msg, t in self.bag.read_messages(topics=['/novatel_data/rtkpos']):
+            count += 1
+            if count > self.limit:
+                break
+            if msg.header.gps_week_seconds % 100 == 0:
+                x, y = self.latlon2xy(msg.latitude, msg.longitude)
+                self.rtkpos_x.append(x)
+                self.rtkpos_y.append(y)
+                # self.bestpos_time.append(msg.header.gps_week_seconds)
+        cur = 0
         count = 0
         for topic, msg, t in self.bag.read_messages(topics=['/novatel_data/bestpos']):
             count += 1
-            if count > 3000:
+            if count > self.limit:
                 break
             if msg.header.gps_week_seconds % 100 == 0:
                 x, y = self.latlon2xy(msg.latitude, msg.longitude)
@@ -34,16 +62,21 @@ class PosType:
                 self.bestpos_y.append(y)
                 self.bestpos_time.append(msg.header.gps_week_seconds)
         cur = 0
+        count = 0
         for topic, msg, t in self.bag.read_messages(topics=['/novatel_data/inspvax']):
-            if cur < len(self.bestpos_time) and msg.header.gps_week_seconds == self.bestpos_time[cur]:
+            # if cur < len(self.bestpos_time) and msg.header.gps_week_seconds == self.bestpos_time[cur]:
+            count += 1
+            if count > self.limit * 2.5:
+                break
+            if msg.header.gps_week_seconds % 100 == 0:
                 x, y = self.latlon2xy(msg.latitude, msg.longitude)
                 self.inspos_x.append(x)
                 self.inspos_y.append(y)
                 self.inspos_time.append(msg.header.gps_week_seconds)
                 cur += 1
-        for i in range(0, len(self.bestpos_time)):
-            if np.sqrt((pos.inspos_x[i] - pos.bestpos_x[i]) ** 2 + (pos.inspos_y[i] - pos.inspos_y[i]) ** 2) < 1:
-                self.distance.append(np.sqrt((pos.inspos_x[i] - pos.bestpos_x[i]) ** 2 + (pos.inspos_y[i] - pos.inspos_y[i]) ** 2))
+        # for i in range(0, len(self.bestpos_time)):
+            # if np.sqrt((pos.inspos_x[i] - pos.bestpos_x[i]) ** 2 + (pos.inspos_y[i] - pos.inspos_y[i]) ** 2) < 1:
+            #     self.distance.append(np.sqrt((pos.inspos_x[i] - pos.bestpos_x[i]) ** 2 + (pos.inspos_y[i] - pos.inspos_y[i]) ** 2))
         self.bag.close()
 
     def DEG2RAD(self, x):
@@ -79,7 +112,10 @@ class PosType:
     def plot(self):
         plt.subplot(211)
         plt.plot(self.bestpos_x, self.bestpos_y, 'r', label='bestpos')
-        plt.plot(self.inspos_x, self.inspos_y, 'b', label='inspvax')
+        plt.plot(self.inspos_x, self.inspos_y, 'b', label='inspos')
+        plt.plot(self.ppppos_x, self.ppppos_y, 'g', label='ppppos')
+        plt.plot(self.rtkpos_x, self.rtkpos_y, 'y', label='rtkpos')
+
         # plt.plot(self.bestpos_x[0], self.bestpos_y[0], color='green', linewidth=100, label='start')
         plt.legend(loc='upper left')
         plt.subplot(212)

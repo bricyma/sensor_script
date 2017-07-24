@@ -108,8 +108,8 @@ if __name__ == '__main__':
     print 'bag1: average vertical position accuracy', round(np.mean(pos.altitude_std1),2)
 
     print 'bag2: average satellites', np.mean(pos.satellite2)
-    print 'bag2: average horizontal position accuracy', np.mean(pos.posacc2)
-    print 'bag2: standard deviation of 2d position accuracy', np.std(pos.posacc2)
-    print 'bag2: average vertical position accuracy', np.mean(pos.altitude_std2)
+    print 'bag2: average horizontal position accuracy', np.mean(pos.posacc2), 'm'
+    print 'bag2: standard deviation of 2d position accuracy', np.std(pos.posacc2), 'm'
+    print 'bag2: average vertical position accuracy', np.mean(pos.altitude_std2), 'm'
 
     pos.plot()
