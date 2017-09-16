@@ -7,14 +7,14 @@ import rosbag
 class DrawOnMap():
     def __init__(self):
         bag_path = '../../rosbag/'
-        bagname = bag_path + '_2017-08-25-12-39-12_6.bag'
+        bagname = bag_path + '_2017-09-11-16-46-43_4.bag'
         # bagname = bag_path + sys.argv[1]
         self.bag = rosbag.Bag(bagname)
         self.novatel_lat = []
         self.novatel_lng = []
 
     def read_bag(self):
-        for topic, msg, t in self.bag.read_messages(topics=['/novatel_data/bestpos']):
+        for topic, msg, t in self.bag.read_messages(topics=['/image_localization_fusion/inspvax']):
             self.novatel_lat.append(msg.latitude)
             self.novatel_lng.append(msg.longitude)
 
