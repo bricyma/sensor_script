@@ -30,16 +30,14 @@ class LocCheck:
         unit = {}
         for topic, msg, t in self.bag.read_messages(topics=['/image_localization_fusion/inspvax']):
             unit_ll = self.inspvax2dict(msg)
-            x, y = self.latlon2xy(msg.latitude, msg.longitude)
-            unit_en = self.en2dict(msg, x, y)
+            unit_en = self.en2dict(msg, *self.latlon2xy(msg.latitude, msg.longitude))
 
             self.data['image']['ll'][str(unit_ll['seq'])] = unit_ll
             self.data['image']['en'][str(unit_en['seq'])] = unit_en
 
         for topic, msg, t in self.bag.read_messages(topics=['/novatel_data/inspvax']):
             unit_ll = self.inspvax2dict(msg)
-            x, y = self.latlon2xy(msg.latitude, msg.longitude)
-            unit_en = self.en2dict(msg, x, y)
+            unit_en = self.en2dict(msg, *self.latlon2xy(msg.latitude, msg.longitude))
 
             self.data['gnss']['ll'][str(unit_ll['seq'])] = unit_ll
             self.data['gnss']['en'][str(unit_en['seq'])] = unit_en
@@ -56,14 +54,15 @@ class LocCheck:
         self.gnss_en = np.array(list_gnss_en)
         self.image_en = np.array(list_image_en)
         self.diff_en = self.image_en - self.gnss_en
-        self.yaw = np.array(list_yaw)
+        self.yaw = self.DEG2RAD(np.array(list_yaw))
+        # self.data['yaw'] = self.DEG2RAD(np.array(self.yaw))
 
         # enu to base_link
-        x = self.diff_en[:,0]
-        y = self.diff_en[:,1]
-        self.diff_xy = -x * np.cos(self.yaw) + y * np.sin(self.yaw), \
-                   x * np.sin(self.yaw) + y * np.cos(self.yaw)
-        self.data['yaw'] = self.DEG2RAD(np.array(self.yaw))
+        x = self.diff_en[:, 0]
+        y = self.diff_en[:, 1]
+        self.diff_xy = np.zeros([len(x), 2])
+        self.diff_xy[:, 0] = -x * np.cos(self.yaw) + y * np.sin(self.yaw)
+        self.diff_xy[:, 1] = x * np.sin(self.yaw) + y * np.cos(self.yaw)
 
 
     def DEG2RAD(self, x):
@@ -89,9 +88,15 @@ class LocCheck:
 
 
     def plot(self):
-        plt.plot(self.diff_xy[0], label='x')
-        plt.plot(self.diff_xy[1], label='y')
+        plt.subplot(211)
+        plt.plot(self.diff_en[:, 0], label='e')
+        plt.plot(self.diff_en[:, 1], label='n')
         plt.legend(loc='upper left')
+        plt.subplot(212)
+        plt.plot(self.diff_xy[:, 0], label='x')
+        plt.plot(self.diff_xy[:, 1], label='y')
+        plt.legend(loc='upper left')
+
         plt.show()
 
 
