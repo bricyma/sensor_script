@@ -6,7 +6,6 @@ import math
 EARTH_RADIUS = 6378137.0
 class LocCheck:
     def __init__(self, bagname):
-        self.data = {}
         self.bag = rosbag.Bag(bagname)
         self.data = {}
         self.baseLat = 0.693143165823
@@ -55,7 +54,6 @@ class LocCheck:
         self.image_en = np.array(list_image_en)
         self.diff_en = self.image_en - self.gnss_en
         self.yaw = self.DEG2RAD(np.array(list_yaw))
-        # self.data['yaw'] = self.DEG2RAD(np.array(self.yaw))
 
         # enu to base_link
         x = self.diff_en[:, 0]
