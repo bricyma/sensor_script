@@ -29,7 +29,7 @@ class Orientation:
         self.data['lat'] = []
         self.data['lon'] = []
         self.data['yaw'] = []
-        for topic, msg, t in self.bag.read_messages(topics=['/paladin/novatel_data/inspvax']):
+        for topic, msg, t in self.bag.read_messages(topics=['/novatel_data/inspvax']):
             self.north_vel.append(msg.north_velocity)
             self.east_vel.append(msg.east_velocity)
             self.data['yaw'].append(msg.azimuth)
@@ -62,13 +62,20 @@ class Orientation:
 
             self.ori_vel.append(cur_ori)
 
+    def compare(self):
+        yaw1 = np.array(self.data['yaw'])
+        yaw2 = np.array(self.data['gps_yaw'])
+
+        self.diff = yaw1[:-1] - yaw2
+        print 'mean diff: ', np.mean(self.diff)
+
     def plot(self):
         plt.subplot(211)
         plt.plot(self.data['yaw'], 'r', label='yaw')
         plt.plot(self.data['gps_yaw'], 'b', label='orientation from gps')
         plt.legend(loc='upper left')
         plt.subplot(212)
-        # plt.plot(self.diff, 'r', label='diff')
+        plt.plot(self.diff, 'r', label='diff')
         # plt.legend(loc='upper left')
 
         plt.show()
@@ -98,8 +105,9 @@ class Orientation:
     def run(self):
         self.readbag()
         self.gps2orientation()
+        self.compare()
         self.plot()
 
 if __name__ == '__main__':
-    ori = Orientation("_2017-09-20-15-08-23_1.bag")
+    ori = Orientation("_2017-09-21-14-40-59_6.bag")
     ori.run()
