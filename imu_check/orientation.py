@@ -13,7 +13,7 @@ EARTH_RADIUS = 6378137.0
 
 class Orientation:
     def __init__(self, bagname):
-        bag_path = '../../rosbag/'
+        bag_path = ''
         bag = bag_path + bagname
         self.bag = rosbag.Bag(bag)
         self.north_vel= []
@@ -67,6 +67,9 @@ class Orientation:
         yaw2 = np.array(self.data['gps_yaw'])
 
         self.diff = yaw1[:-1] - yaw2
+	for i, unit in enumerate(self.diff):
+	    if unit > 1 or unit < -1:
+	       self.diff[i] = 0
         print 'mean diff: ', np.mean(self.diff)
 
     def plot(self):
@@ -109,5 +112,6 @@ class Orientation:
         self.plot()
 
 if __name__ == '__main__':
-    ori = Orientation("_2017-09-21-14-40-59_6.bag")
+    bag = sys.argv[1]
+    ori = Orientation(bag)
     ori.run()
