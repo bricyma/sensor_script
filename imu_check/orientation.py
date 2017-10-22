@@ -22,8 +22,11 @@ class Orientation:
         self.ori_vel = []  # orientation calculated from east_velocity and north_velocity
         self.diff = []   # yaw - orientation_from
         self.data = {}
-        self.baseLat = 0.693143165823
+        self.baseLat = 0.693143165823  #caofeidian
         self.baseLon = 2.04736661229
+	
+	self.baseLat = 0.546932  #shanghai
+	self.baseLon = 2.115661  
 
     def readbag(self):
         self.data['lat'] = []
