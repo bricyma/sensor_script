@@ -64,6 +64,7 @@ class PosType:
 
     def plot(self):
         plt.subplot(511)
+        plt.ylim(0, 80)
         plt.plot(self.postype1, 'r')
         plt.plot(self.postype2, 'b')
 

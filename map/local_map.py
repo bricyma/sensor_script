@@ -111,8 +111,8 @@ class PosType:
 
     def plot(self):
         plt.subplot(211)
-        plt.plot(self.bestpos_x, self.bestpos_y, 'r', label='bestpos')
-        plt.plot(self.inspos_x, self.inspos_y, 'b', label='inspos')
+        plt.plot(self.bestpos_x, self.bestpos_y, 'r', marker='o', label='bestpos')
+        plt.plot(self.inspos_x, self.inspos_y, 'b', marker='o', label='inspos')
         plt.plot(self.ppppos_x, self.ppppos_y, 'g', label='ppppos')
         plt.plot(self.rtkpos_x, self.rtkpos_y, 'y', label='rtkpos')
 
