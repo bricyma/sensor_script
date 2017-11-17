@@ -30,8 +30,7 @@ class Orientation:
 
         print 'baseLat: ', self.baseLat
         print 'baseLon: ', self.baseLon
-        self.baseLat = 0.546932  #shanghai
-        self.baseLon = 2.115661
+
 
     def readbag(self):
         self.data['lat'] = []
@@ -100,7 +99,7 @@ class Orientation:
         return x * (180 / math.pi)
 
     # method 2
-    def latlon2xy(self, lat, lon):
+    def latlon2xy2(self, lat, lon):
         er = 6378137.0
         lat0 = 0
         s = np.cos(lat0 * math.pi / 180)
@@ -109,7 +108,7 @@ class Orientation:
         return tx, ty
 
     # there is some problem in it
-    def latlon2xy2(self, lat_, lon_):
+    def latlon2xy(self, lat_, lon_):
         lat, lon = self.DEG2RAD(lat_), self.DEG2RAD(lon_)
         xx = math.cos(lat) * math.cos(lon) * math.cos(self.baseLon) * math.cos(self.baseLat) \
             + math.cos(lat) * math.sin(lon) * math.sin(self.baseLon) * math.cos(self.baseLat) \
