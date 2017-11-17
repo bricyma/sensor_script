@@ -25,9 +25,15 @@ class PosType:
         self.bestpos_time = []
         self.inspos_time = []
         self.distance = []
-        self.baseLat = self.DEG2RAD(32.694052)
-        self.baseLon = self.DEG2RAD(-113.958389)
+        # SD
+        # self.baseLat = self.DEG2RAD(32.694052)
+        # self.baseLon = self.DEG2RAD(-113.958389)
+        # caofeidian
+        self.baseLat = self.DEG2RAD(39.5096245928)
+        self.baseLon = self.DEG2RAD(118.110978652)
+
         self.limit = 5000000
+
     def readbag(self):
         count = 0
         for topic, msg, t in self.bag.read_messages(topics=['/novatel_data/ppppos']):
