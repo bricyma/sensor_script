@@ -24,9 +24,14 @@ class Orientation:
         self.data = {}
         self.baseLat = 0.693143165823  #caofeidian
         self.baseLon = 2.04736661229
-	
-	self.baseLat = 0.546932  #shanghai
-	self.baseLon = 2.115661  
+
+        self.baseLat = self.DEG2RAD(39.03775082210)
+        self.baseLon = self.DEG2RAD(118.43091220755)
+
+        print 'baseLat: ', self.baseLat
+        print 'baseLon: ', self.baseLon
+        #self.baseLat = 0.546932  #shanghai
+	#self.baseLon = 2.115661
 
     def readbag(self):
         self.data['lat'] = []
@@ -71,7 +76,7 @@ class Orientation:
 
         self.diff = yaw1[:-1] - yaw2
 	for i, unit in enumerate(self.diff):
-	    if unit > 1 or unit < -1:
+	    if unit > 2 or unit < -2:
 	       self.diff[i] = 0
         print 'mean diff: ', np.mean(self.diff)
 
@@ -112,7 +117,10 @@ class Orientation:
         self.readbag()
         self.gps2orientation()
         self.compare()
+
+        print 'average gps_yaw: ', np.mean(self.data['gps_yaw'])
         self.plot()
+
 
 if __name__ == '__main__':
     bag = sys.argv[1]
