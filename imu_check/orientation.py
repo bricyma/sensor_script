@@ -36,6 +36,13 @@ class Orientation:
         self.data['lat'] = []
         self.data['lon'] = []
         self.data['yaw'] = []
+        self.data['cal_diff'] = []
+
+        for topic, msg, t in self.bag.read_messages(topics=['/calibrate/diff']):
+            if msg.data > 2 or msg.data < -2:
+                msg.data = 0
+            self.data['cal_diff'].append(msg.data)
+
         for topic, msg, t in self.bag.read_messages(topics=['/novatel_data/inspvax']):
             self.north_vel.append(msg.north_velocity)
             self.east_vel.append(msg.east_velocity)
@@ -73,21 +80,23 @@ class Orientation:
         yaw1 = np.array(self.data['yaw'])
         yaw2 = np.array(self.data['gps_yaw'])
 
-        self.diff = yaw1[:-1] - yaw2
+        self.diff = yaw2 - yaw1[:-1]
         for i, unit in enumerate(self.diff):
             if unit > 2 or unit < -2:
                 self.diff[i] = 0
         print 'mean diff: ', np.mean(self.diff)
 
     def plot(self):
-        plt.subplot(211)
+        plt.subplot(311)
         plt.plot(self.data['yaw'], 'r', label='yaw')
         plt.plot(self.data['gps_yaw'], 'b', label='orientation from gps')
         plt.legend(loc='upper left')
-        plt.subplot(212)
-        plt.plot(self.diff, 'r', label='diff')
-        # plt.legend(loc='upper left')
-
+        plt.subplot(312)
+        plt.plot(self.diff, 'r', label='gps_yaw-inspvax')
+        plt.legend(loc='upper left')
+        plt.subplot(313)
+        plt.plot(self.data['cal_diff'], 'b', label='bestvel-inspvax ')
+        plt.legend(loc='upper left')
         plt.show()
 
 
@@ -99,7 +108,7 @@ class Orientation:
         return x * (180 / math.pi)
 
     # method 2
-    def latlon2xy2(self, lat, lon):
+    def latlon2xy(self, lat, lon):
         er = 6378137.0
         lat0 = 0
         s = np.cos(lat0 * math.pi / 180)
@@ -108,7 +117,7 @@ class Orientation:
         return tx, ty
 
     # there is some problem in it
-    def latlon2xy(self, lat_, lon_):
+    def latlon2xy2(self, lat_, lon_):
         lat, lon = self.DEG2RAD(lat_), self.DEG2RAD(lon_)
         xx = math.cos(lat) * math.cos(lon) * math.cos(self.baseLon) * math.cos(self.baseLat) \
             + math.cos(lat) * math.sin(lon) * math.sin(self.baseLon) * math.cos(self.baseLat) \
