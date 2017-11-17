@@ -30,8 +30,8 @@ class Orientation:
 
         print 'baseLat: ', self.baseLat
         print 'baseLon: ', self.baseLon
-        #self.baseLat = 0.546932  #shanghai
-	#self.baseLon = 2.115661
+        self.baseLat = 0.546932  #shanghai
+        self.baseLon = 2.115661
 
     def readbag(self):
         self.data['lat'] = []
@@ -75,9 +75,9 @@ class Orientation:
         yaw2 = np.array(self.data['gps_yaw'])
 
         self.diff = yaw1[:-1] - yaw2
-	for i, unit in enumerate(self.diff):
-	    if unit > 2 or unit < -2:
-	       self.diff[i] = 0
+        for i, unit in enumerate(self.diff):
+            if unit > 2 or unit < -2:
+                self.diff[i] = 0
         print 'mean diff: ', np.mean(self.diff)
 
     def plot(self):
@@ -99,7 +99,17 @@ class Orientation:
     def RAD2DEG(self, x):
         return x * (180 / math.pi)
 
-    def latlon2xy(self, lat_, lon_):
+    # method 2
+    def latlon2xy(self, lat, lon):
+        er = 6378137.0
+        lat0 = 0
+        s = np.cos(lat0 * math.pi / 180)
+        tx = s * er * math.pi * lon / 180.0
+        ty = s * er * np.log(np.tan((90.0 + lat) * math.pi / 360.0))
+        return tx, ty
+
+    # there is some problem in it
+    def latlon2xy2(self, lat_, lon_):
         lat, lon = self.DEG2RAD(lat_), self.DEG2RAD(lon_)
         xx = math.cos(lat) * math.cos(lon) * math.cos(self.baseLon) * math.cos(self.baseLat) \
             + math.cos(lat) * math.sin(lon) * math.sin(self.baseLon) * math.cos(self.baseLat) \
