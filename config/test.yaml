@@ -1,0 +1,22 @@
+hardware:
+  antenna1:
+    x: 1
+    y: 2
+    z: 3
+  antenna2:
+    x:
+    y:
+    z:
+  imu: IMU_STIM300
+
+network:
+  ip: 10.136.9.125
+  port: 2000
+
+rtk:
+  ip:
+  port:
+  mount_point:
+  username:
+  password:
+
