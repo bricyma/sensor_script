@@ -19,22 +19,21 @@ class PosType:
     def readbag(self):
         for topic, msg, t in self.bag.read_messages(topics=['/novatel_data/inspvax']):
             self.yaw.append(msg.azimuth)
-            self.position_type.append(msg.position_type)
-            self.ins_status.append(msg.ins_status)
-            self.yaw_accuracy.append(msg.azimuth_std)
+            # self.position_type.append(msg.position_type)
+            # self.ins_status.append(msg.ins_status)
+            # self.yaw_accuracy.append(msg.azimuth_std)
         self.bag.close()
 
     def plot(self):
-        plt.subplot(511)
+        plt.subplot(311)
         plt.plot(self.yaw, 'r')
-        plt.plot(self.position_type, 'b')
         plt.title("Yaw")
 
-        plt.subplot(512)
+        plt.subplot(312)
         plt.plot(self.ins_status, 'r')
         plt.title('ins status')
 
-        plt.subplot(513)
+        plt.subplot(313)
         plt.plot(self.yaw_accuracy, 'r')
         plt.title('yaw accuracy')
 
