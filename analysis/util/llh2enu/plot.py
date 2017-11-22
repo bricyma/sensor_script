@@ -6,7 +6,7 @@ import sys
 
 class GPSPlot():
     def __init__(self):
-        bag_path = '/home/zhibei/workspace/rosbag/'
+        bag_path = '/home/bricy/workspace/rosbag/'
         # bagname = bag_path + '_2017-09-24-17-22-14_6.bag'
         bagname = bag_path + sys.argv[1]
         self.bag = rosbag.Bag(bagname)
@@ -29,8 +29,8 @@ class GPSPlot():
                 self.lat0 = msg.latitude
                 self.lon0 = msg.longitude
                 self.first_flag = True
-                self.lat0 = 39.714178
-                self.lon0 = 117.305466
+                # self.lat0 = 39.714178
+                # self.lon0 = 117.305466
 
                 # self.lat0 = 39.03775082210
                 # self.lon0 = 118.43091220755
@@ -48,31 +48,47 @@ class GPSPlot():
                 x2, y2 = test.llh2enu_2(lat, lon, 0, self.lat0, self.lon0, 0)
                 x3, y3 = test.llh2enu_3(lat, lon, self.lat0, self.lon0)
                 # method referenced http://digext6.defence.gov.au/dspace/bitstream/1947/3538/1/DSTO-TN-0432.pdf
+                if len(self.x1) > 0:
+                    self.x1.append(x1 - self.x1[0])
+                    self.y1.append(y1 - self.y1[0])
+                    # from wiki
+                    self.x2.append(x2 - self.x2[0])
+                    self.y2.append(y2 - self.y2[0])
 
+                    # from kitti
+                    self.x3.append((x3 - x3_0) - self.x3[0])
+                    self.y3.append((y3 - y3_0) - self.y3[0])
 
-                self.x1.append(x1)
-                self.y1.append(y1)
+                    # octopus
+                    self.x5.append((x5 - x5_0) - self.x5[0])
+                    self.y5.append((y5 - y5_0) - self.y5[0])
+                else:
+                    self.x1.append(x1)
+                    self.y1.append(y1)
+                    self.x2.append(x2)
+                    self.y2.append(y2)
+                    self.x3.append(x3 - x3_0)
+                    self.y3.append(y3 - y3_0)
+                    self.x5.append(x5 - x5_0)
+                    self.y5.append(y5 - y5_0)
 
-                # from wiki
-                self.x2.append(x2)
-                self.y2.append(y2)
+        self.x1[0] = 0
+        self.y1[0] = 0
+        self.x2[0] = 0
+        self.y2[0] = 0
+        self.x3[0] = 0
+        self.y3[0] = 0
+        self.x5[0] = 0
+        self.y5[0] = 0
 
-                # from kitti
-                self.x3.append((x3-x3_0))
-                self.y3.append((y3-y3_0))
-
-                # octopus
-                self.x5.append((x5-x5_0))
-                self.y5.append((y5-y5_0))
-                print 'm1: ', x1-self.x1[0], y1-self.y1[0]
-                print 'm2: ', x2-self.x2[0], y2-self.y2[0]
-                print 'm3: ', x3-x3_0-self.x3[0], y3-y3_0-self.y3[0]
-                print 'm5: ', x5-x5_0-self.x5[0], y5-y5_0-self.y5[0]
 
     def plot(self):
         plt.subplot(411)
         plt.plot(self.x1, self.y1, 'b', label='defence')
-        plt.legend(loc='upper left')
+        plt.plot(self.x2, self.y2, 'y', label='wiki')
+        plt.plot(self.x3, self.y3, 'g', label='kitti')
+        plt.plot(self.x5, self.y5, 'r', label='octopus')
+        plt.legend(loc='upper right')
         plt.subplot(412)
         plt.plot(self.x2, self.y2, 'b', label='wiki')
         plt.legend(loc='upper left')

@@ -4,7 +4,7 @@ import os
 import time
 import sys
 
-yaml_file = sys.argv[1] 
+yaml_file = sys.argv[1]
 
 # read yaml
 with open("test.yaml", 'r') as stream:

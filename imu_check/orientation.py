@@ -27,13 +27,13 @@ class Orientation:
         self.baseLat = 0.693143165823  #caofeidian
         self.baseLon = 2.04736661229
         self.transform = gps_transformer()
-        self.baseLat = self.DEG2RAD(39.03775082210)
+        self.baseLat = self.DEG2RAD(39.03775082210) # wuhudao
         self.baseLon = self.DEG2RAD(118.43091220755)
 
         self.baseLat = self.RAD2DEG(self.baseLat)
         self.baseLon = self.RAD2DEG(self.baseLon)
 
-        self.baseLat = 39.714178
+        self.baseLat = 39.714178  # beijing
         self.baseLon = 117.305466
         print 'baseLat: ', self.baseLat
         print 'baseLon: ', self.baseLon
@@ -52,7 +52,12 @@ class Orientation:
                 msg.data = 0
             self.data['cal_diff'].append(msg.data)
 
+        first_flag = True # choose the start point as the base
         for topic, msg, t in self.bag.read_messages(topics=['/novatel_data/inspvax']):
+            if first_flag:
+                self.baseLat = msg.latitude
+                self.baseLon = msg.longitude
+                first_flag = False
             self.north_vel.append(msg.north_velocity)
             self.east_vel.append(msg.east_velocity)
             self.data['yaw'].append(msg.azimuth)
@@ -67,7 +72,7 @@ class Orientation:
                 break
             lon = self.data['lon'][i]
             # method1: octopus
-            x, y = self.transform.llh2enu_3(lat, lon, self.baseLat, self.baseLon)
+            x, y = self.transform.llh2enu_1(lat, lon, 0, self.baseLat, self.baseLon, 0)
             #x, y = self.latlon2xy2(lat, lon)
 
             # method2: kitti
@@ -77,7 +82,7 @@ class Orientation:
             lon2 = self.data['lon'][i+1]
 
             # x2, y2 = self.latlon2xy2(lat2, lon2)
-            x2, y2 = self.transform.llh2enu_3(lat2, lon2, self.baseLat, self.baseLon)
+            x2, y2 = self.transform.llh2enu_1(lat2, lon2, 0, self.baseLat, self.baseLon, 0)
 
             gps_yaw = self.RAD2DEG(np.arctan2(x2-x, y2-y))
             if gps_yaw < 0:
