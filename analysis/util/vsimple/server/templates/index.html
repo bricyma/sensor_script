@@ -1,0 +1,582 @@
+<!DOCTYPE HTML>
+<html>
+<head>
+    <title>VSimple</title>
+    <script type="text/javascript" src="//code.jquery.com/jquery-1.12.4.min.js"></script>
+    <script type="text/javascript" src="//cdnjs.cloudflare.com/ajax/libs/socket.io/1.3.5/socket.io.min.js"></script>
+    <script type="text/javascript" src="//cdn.rawgit.com/konvajs/konva/1.2.2/konva.min.js"></script>
+    <script type="text/javascript" src="//cdnjs.cloudflare.com/ajax/libs/keymaster/1.6.1/keymaster.min.js"></script>
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css"
+          integrity="sha384-BVYiiSIFeK1dGmJRAkycuHAHRg32OmUcww7on3RYdg4Va+PmSTsz/K68vbdEjh4u" crossorigin="anonymous">
+    <script type="text/javascript" charset="utf-8">
+        $(document).ready(function () {
+            // Use a "/test" namespace.
+            // An application can open a connection on multiple namespaces, and
+            // Socket.IO will multiplex all those connections on a single
+            // physical channel. If you don't care about multiple channels, you
+            // can set the namespace to an empty string.
+            namespace = '/test';
+
+            // Connect to the Socket.IO server.
+            // The connection URL has the following format:
+            //     http[s]://<domain>:<port>[/<namespace>]
+            var socket = io.connect(location.protocol + '//' + document.domain + ':' + location.port + namespace);
+
+
+            /*
+             *  layers data structure
+             */
+
+            // contains all layers, destroy all elements when update frame
+            var g_layerContainer = [];
+
+            // one stage for one img
+            var g_stages = [];
+
+            // one layer for one stage, i.e. for one img
+            var g_layers = [];
+
+            /*
+             *  tooltip data structure
+             */
+
+            // tooltip layer
+            var tooltipLayers = [];
+
+            // tooltip info
+            var tooltips;
+
+            // backgroud of tooltip
+            var tooltipRects;
+
+            /*
+             * tags data structure
+             */
+            var tags = [];
+            var obj_tags = [];
+
+
+            /*
+             * flag to create canvas and img div, hence you need to refresh page before rendering different client task
+             */
+            var init = false;
+
+
+            var selected_json = "";
+            var selected_rect = "";
+
+
+            // Event handler for server sent data.
+            // The callback function is invoked whenever the server emits data
+            // to the client. The data is then displayed in the "Received"
+            // section of the page.
+            var id = "";
+
+            socket.on('my_response', function (msg) {
+                id = msg['name'];
+                var images = msg.images;
+                if (!init) {
+                    for (var i = 0; i < images.length; i++) {
+                        //append image and canvas div to Container
+                        var canvasContainer = $('#canvasContainer');
+
+                        var canvasName = 'canvas' + i;
+                        var imageName = 'img' + i;
+                        $("<div id='" + canvasName + "' width='600px' height='400px' style='z-index:1000;position:absolute;'></div>").appendTo(canvasContainer);
+                        $("<img id='" + imageName + "' width='600px'' height='400px'/>").appendTo(canvasContainer);
+                        g_stages.push(new Konva.Stage({
+                            container: canvasName,
+                            width: 600,
+                            height: 400
+                        }));
+
+                    }
+                    init = true;
+                }
+
+                console.log('data is', msg);
+
+                $('#cblist').empty();
+                msg['layers'].forEach(function (val, i) {
+                    addLayerCheckbox(val['name']);
+                });
+
+                $('#tagsContainer').empty();
+                msg['tags'].forEach(function (val, i) {
+                    var tagName = val['name'];
+                    var tagType = val['type'];
+                    tags.push({
+                        name: tagName,
+                        type: tagType
+                    });
+                    var tagsContainer = $('#tagsContainer');
+
+                    $('<h3 >' + tagName + '</h3>').appendTo(tagsContainer);
+                    $('<div id=' + tagName + 'div' + '></div>').appendTo(tagsContainer);
+
+                    if (tagType == 'radio') {
+                        val['values'].forEach(function (option, j) {
+                            addTags(tagName, option, tagType);
+                        });
+                    } else if (tagType == 'checkbox') {
+                        val['values'].forEach(function (option, j) {
+                            addTags(tagName, option, tagType);
+                        });
+                    } else if (tagType == 'text') {
+                        addTags(tagName, '', tagType);
+                    }
+                });
+                emptyObjTag();
+
+                // going to draw
+                advancedDraw(g_stages, msg);
+
+                // creat tooltip layer
+                tooltipLayerDraw(g_stages);
+
+
+                updateInfo(msg['info']);
+
+                $('#cblist input[type=checkbox]').click(function () {
+                    advancedDraw(g_stages, msg);
+                });
+
+                for (var i = 0; i < images.length; i++) {
+                    var src = "data:image/jpeg;base64,";
+                    src += msg.images[i]['b64'];
+                    $('#img' + i).attr('src', src);
+                }
+                // $('#img0').attr('src', src);
+            });
+
+            // bind key
+            key('left', function () {
+                console.log("prev");
+                socket.emit('prev');
+                return false;
+            });
+
+            key('right', function () {
+                console.log("next");
+                socket.emit('next');
+                return false;
+            });
+
+            key('space', function () {
+                console.log('play');
+                socket.emit('play');
+                return false;
+            });
+
+            $('#next').click(function () {
+                console.log("next");
+                socket.emit('next');
+                return false;
+            });
+
+            $('#prev').click(function () {
+                console.log("prev");
+                socket.emit('prev');
+                return false;
+            });
+
+            $('#pp').click(function () {
+                console.log("play");
+                socket.emit('play');
+                return false;
+            });
+
+            $('#submit').click(function () {
+                console.log("submit");
+
+                var re = {};
+                tags.forEach(function (value, i) {
+                    var name = value['name'];
+                    var type = value['type'];
+                    if (type == 'radio') {
+                        re[name] = $("input[name='" + name + "']:checked").val();
+                        $("input[name='" + name + "']:checked").prop("checked", false);
+                    } else if (type == 'checkbox') {
+                        re[name] = [];
+                        $("input[name='" + name + "']:checked").map(function () {
+                            re[name].push(this.value);
+                        });
+                        $("input[name='" + name + "']").removeAttr('checked');
+                    } else if (type == 'text') {
+                        re[name] = $("input[name='" + name + "']").val();
+                        $("input[name='" + name + "']").val("");
+
+                    }
+                });
+                if (selected_json != "") {
+                    obj_tags.forEach(function (value, i) {
+                        var name = value['name'];
+                        var type = value['type'];
+
+                        if (type == 'radio') {
+                            re[name] = {
+                                "selected": selected_json,
+                                "val": $("input[name='" + name + "']:checked").val()
+                            };
+                            $("input[name='" + name + "']:checked").prop("checked", false);
+                        } else if (type == 'checkbox') {
+                            var re_temp = [];
+                            $("input[name='" + name + "']:checked").map(function () {
+                                re_temp.push(this.value);
+                            });
+                            re[name] = {
+                                "selected": selected_json,
+                                "val": re_temp
+                            };
+                            $("input[name='" + name + "']").removeAttr('checked');
+                        } else if (type == 'text') {
+                            re[name] = {
+                                "selected": selected_json,
+                                "val": $("input[name='" + name + "']").val()
+                            };
+                            $("input[name='" + name + "']").val("");
+                        }
+                    });
+                }
+                socket.emit('tag', {'tags': re, 'id': id});
+                emptyObjTag();
+                return false;
+            });
+
+            function emptyObjTag() {
+                $('#objTagsContainer').empty();
+                if (selected_rect != "") {
+                    selected_rect.fill(null);
+                }
+                selected_json = "";
+                selected_rect = "";
+                if (g_layers != null) {
+                    g_layers = [];
+                }
+            }
+
+            function updateInfo(info) {
+                $('#info').text(info);
+            }
+
+            function addLayerCheckbox(name) {
+                var container = $('#cblist');
+                var inputs = container.find('input');
+                var id = inputs.length + 1;
+
+                $('<input />', {type: 'checkbox', id: 'cb' + name, value: name}).appendTo(container);
+                $('#cb' + name).attr('checked', 'checked');
+                $('<label />', {'for': 'cb' + name, text: name}).appendTo(container);
+                $('<br/>').appendTo(container);
+            }
+
+            function addTags(name, value, type) {
+                var container = $('#' + name + 'div');
+
+                $('<input />', {type: type, name: name, value: value}).appendTo(container).after(value);
+                $('</br>').appendTo(container);
+            }
+
+            var tooltipLayerDraw = function (stages) {
+                tooltipLayers = [];
+                tooltips = [];
+                tooltipRects = [];
+                for (var i = 0; i < stages.length; i++) {
+                    var tooltip = new Konva.Text({
+                        text: "",
+                        fontFamily: "Calibri",
+                        fontSize: 12,
+                        padding: 5,
+                        textFill: "white",
+                        fill: "black",
+                        alpha: 0.75,
+                        visible: false
+                    });
+
+                    var tooltipRect = new Konva.Rect({
+                        stroke: '#555',
+                        strokeWidth: 2,
+                        fill: 'AliceBlue',
+                        width: 200,
+                        height: tooltip.getHeight(),
+                        shadowColor: 'black',
+                        shadowBlur: 10,
+                        shadowOffset: [10, 10],
+                        shadowOpacity: 0.2,
+                        cornerRadius: 10,
+                        visible: false
+                    });
+
+                    tooltips.push(tooltip);
+                    tooltipRects.push(tooltipRect);
+
+
+                    var tooltipLayer = new Konva.Layer();
+                    g_layerContainer.push(tooltipLayer);
+
+                    tooltipLayer.add(tooltipRect);
+                    tooltipLayer.add(tooltip);
+                    stages[i].add(tooltipLayer);
+
+                    tooltipLayers.push(tooltipLayer);
+                }
+
+
+            };
+
+            // find layers in which image, return index of image
+            var layersInImageIndex = function (layerName, images) {
+                for (var i = 0; i < images.length; i++) {
+                    var imageLayers = images[i]['layers'];
+
+                    for (var layer in imageLayers) {
+                        if (layer == layerName) {
+                            return i;
+                        }
+                    }
+                }
+                alert('layersInImageIndex no hit, impossible!');
+            };
+
+            // draw method for all
+            var advancedDraw = function (stages, data) {
+                while (g_layerContainer.length > 0) {
+                    var oldLayer = g_layerContainer.pop();
+                    oldLayer.destroy();
+
+                }
+                g_layers = [];
+
+                for (var i = 0; i < stages.length; i++) {
+                    var layer = new Konva.Layer();
+                    stages[i].add(layer);
+                    g_layerContainer.push(layer);
+                    g_layers.push(layer);
+                }
+
+                var layers = data['layers'];
+
+                // each layer may be draw or image type
+                layers.forEach(function (layerInfo, i) {
+                    var name = layerInfo['name'];
+                    var type = layerInfo['type'];
+                    var imageIndex = layersInImageIndex(name, data['images']);
+                    var layer = g_layers[imageIndex];
+                    if (type == 'draw') {
+                        if ($('#cb' + name).is(':checked')) {
+                            console.log('data ', data);
+                            console.log('imageINdex', imageIndex);
+                            console.log('name is ', name);
+                            var shapes = data['images'][imageIndex]['layers'][name];
+
+                            shapes.forEach(function (shape_json, i) {
+
+                                var shape_type = shape_json['type'];
+                                if (shape_type == 'bbox') {
+
+                                    var rect = new Konva.Rect({
+                                        x: 600 * shape_json['left'],
+                                        y: 400 * shape_json['top'],
+                                        width: 600 * (shape_json['right'] - shape_json['left']),
+                                        height: 400 * (shape_json['bottom'] - shape_json['top']),
+                                        stroke: shape_json['color'],
+                                        strokeWidth: 2
+                                    });
+
+                                    rect.on("mousemove", function () {
+                                        var tooltip = tooltips[imageIndex];
+                                        var tooltipRect = tooltipRects[imageIndex];
+                                        var tooltipLayer = tooltipLayers[imageIndex];
+
+                                        var mousePos = stages[imageIndex].getPointerPosition();
+                                        tooltip.position({
+                                            x: mousePos.x + 5,
+                                            y: mousePos.y + 5
+                                        });
+                                        tooltipRect.position({
+                                            x: mousePos.x + 5,
+                                            y: mousePos.y + 5
+                                        });
+
+                                        tooltip.text(shape_json['info']);
+                                        console.log('info is ', shape_json['info']);
+                                        tooltip.show();
+                                        tooltipRect.show();
+                                        tooltipLayer.batchDraw();
+                                    });
+
+                                    rect.on("mouseout", function () {
+                                        var tooltip = tooltips[imageIndex];
+                                        var tooltipRect = tooltipRects[imageIndex];
+                                        var tooltipLayer = tooltipLayers[imageIndex];
+
+
+                                        tooltip.hide();
+                                        tooltipRect.hide();
+                                        tooltipLayer.draw();
+                                    });
+
+//                                rect.on("mouseup", function () {
+//                                    console.log("mouseup");
+//                                });
+
+                                    rect.on("mousedown", function () {
+                                        console.log("mousedown", shape_json);
+                                        emptyObjTag();
+                                        selected_json = shape_json;
+                                        selected_rect = rect;
+                                        selected_rect.fill('rgba(0,255,0,0.5');
+                                        $('#objTagsContainer').empty();
+                                        data['obj_tags'].forEach(function (val, i) {
+                                            var tagName = val['name'];
+                                            var tagType = val['type'];
+                                            obj_tags.push({
+                                                name: tagName,
+                                                type: tagType
+                                            });
+                                            var tagsContainer = $('#objTagsContainer');
+
+                                            $('<h3 >' + tagName + '</h3>').appendTo(tagsContainer);
+                                            $('<div id=' + tagName + 'div' + '></div>').appendTo(tagsContainer);
+
+                                            if (tagType == 'radio') {
+                                                val['values'].forEach(function (option, j) {
+                                                    addTags(tagName, option, tagType);
+                                                });
+                                            } else if (tagType == 'checkbox') {
+                                                val['values'].forEach(function (option, j) {
+                                                    addTags(tagName, option, tagType);
+                                                });
+                                            } else if (tagType == 'text') {
+                                                addTags(tagName, '', tagType);
+                                            }
+                                        });
+                                        layer.draw();
+                                    });
+
+                                    layer.add(rect);
+                                } else if (shape_type == 'line') {
+                                    var points = shape_json['points'];
+                                    var color = shape_json['color'];
+
+                                    // convert to opints array
+                                    var pointsArray = [];
+                                    for (var i = 0; i < points.length; i++) {
+                                        pointsArray.push(points[i]['x'] * 600);
+                                        pointsArray.push(points[i]['y'] * 400);
+                                    }
+
+                                    var line = new Konva.Line({
+                                        points: pointsArray,
+                                        stroke: color
+                                    });
+
+
+                                    line.on("mousemove", function () {
+                                        var tooltip = tooltips[imageIndex];
+                                        var tooltipRect = tooltipRects[imageIndex];
+                                        var tooltipLayer = tooltipLayers[imageIndex];
+
+
+                                        var mousePos = stages[imageIndex].getPointerPosition();
+                                        tooltip.position({
+                                            x: mousePos.x + 5,
+                                            y: mousePos.y + 5
+                                        });
+                                        tooltipRect.position({
+                                            x: mousePos.x + 5,
+                                            y: mousePos.y + 5
+                                        });
+
+                                        tooltip.text(shape_json['info']);
+                                        console.log('info is ', shape_json['info']);
+                                        tooltip.show();
+                                        tooltipRect.show();
+                                        tooltipLayer.batchDraw();
+                                    });
+
+                                    line.on("mouseout", function () {
+                                        var tooltip = tooltips[imageIndex];
+                                        var tooltipRect = tooltipRects[imageIndex];
+                                        var tooltipLayer = tooltipLayers[imageIndex];
+
+
+                                        tooltip.hide();
+                                        tooltipRect.hide();
+                                        tooltipLayer.draw();
+                                    });
+
+
+                                    layer.add(line);
+                                }
+
+                            });
+
+
+                        }
+                    } else if (type == 'image') {
+                        if ($('#cb' + name).is(':checked')) {
+                            var b64 = data['images'][imageIndex]['layers'][name]['b64'];
+                            var src = "data:image/jpeg;base64,";
+                            src += b64;
+
+                            var alpha = data['images'][imageIndex]['layers'][name]['alpha'];
+
+                            var imageObj = new Image();
+                            imageObj.src = src;
+
+                            var bgLayer = new Konva.Image({
+                                image: imageObj,
+                                width: 600,
+                                height: 400,
+                                opacity: alpha
+                            });
+
+                            layer.add(bgLayer);
+                        }
+
+                    }
+
+                    layer.draw();
+
+                });
+
+            };
+        });
+
+    </script>
+</head>
+<body>
+<div class="container">
+    <h1>VSimple</h1>
+    <div class="row">
+        <div class="col-md-6 ">
+            <div class="row">
+                <div class="col-md-3 offset-md-1">
+                    <button type="button" class="btn btn-primary" id="prev">prev</button>
+                </div>
+                <div class="col-md-3 offset-md-1">
+                    <button type="button" class="btn btn-primary" id="pp">Play / Pause</button>
+                </div>
+                <div class="col-md-3 offset-md-1">
+                    <button type="button" class="btn btn-primary" id="next">next</button>
+                </div>
+            </div>
+            <div id="canvasContainer"></div>
+
+            <div id="info"> Info about this frame</div>
+        </div>
+        <div class="col-md-1 offset-md-5" style="margin-left:100px">
+            <div id="tagsContainer"></div>
+            <hr/>
+            <div id="objTagsContainer"></div>
+
+            <button id="submit">submit</button>
+
+            <h2> Layers </h2>
+            <div id="cblist"></div>
+        </div>
+    </div>
+</div>
+</body>
+</html>

@@ -1,0 +1,199 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>VSimple</title>
+    <script type="text/javascript" src="//code.jquery.com/jquery-1.12.4.min.js"></script>
+    <script type="text/javascript" src="//cdnjs.cloudflare.com/ajax/libs/socket.io/1.3.5/socket.io.min.js"></script>
+    <script type="text/javascript" src="//cdnjs.cloudflare.com/ajax/libs/keymaster/1.6.1/keymaster.min.js"></script>
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css"
+          integrity="sha384-BVYiiSIFeK1dGmJRAkycuHAHRg32OmUcww7on3RYdg4Va+PmSTsz/K68vbdEjh4u" crossorigin="anonymous">
+    <script async defer
+            src="https://maps.googleapis.com/maps/api/js?key=AIzaSyDDD6Sgb2JE9ZbJGhfW-qj2cWrXMedNaFo">
+    </script>
+    <style>
+        /* Always set the map height explicitly to define the size of the div
+         * element that contains the map. */
+        #map {
+            height: 100%;
+        }
+
+        /* Optional: Makes the sample page fill the window. */
+        html, body {
+            height: 100%;
+            margin: 0;
+            padding: 0;
+        }
+    </style>
+    <script type="text/javascript" charset="utf-8">
+
+        $(document).ready(function () {
+            // Use a "/test" namespace.
+            // An application can open a connection on multiple namespaces, and
+            // Socket.IO will multiplex all those connections on a single
+            // physical channel. If you don't care about multiple channels, you
+            // can set the namespace to an empty string.
+            namespace = '/map';
+
+            // Connect to the Socket.IO server.
+            // The connection URL has the following format:
+            //     http[s]://<domain>:<port>[/<namespace>]
+            var socket = io.connect(location.protocol + '//' + document.domain + ':' + location.port + namespace);
+
+
+            // Event handler for server sent data.
+            // The callback function is invoked whenever the server emits data
+            // to the client. The data is then displayed in the "Received"
+            // section of the page.
+
+            var initMap = false;
+
+            // path is for polyline
+            var flightPath = [];
+
+            // dots are for scatter
+            var flightDots = [];
+
+            var map;
+
+            var infoWindow;
+
+            // marker is for latest point
+            var marker;
+
+            var data = {};
+
+            socket.on('map_show', function (msg) {
+                        console.log('msg is', msg);
+                        var cmd = msg['cmd'];
+
+                        // parse input
+                        data = {};
+                        if (cmd == 'init') { 
+                            data['zoom'] = parseInt(msg['data']['zoom']);
+                        }
+                        data['lat'] = parseFloat(msg['data']['lat']);
+                        data['lng'] = parseFloat(msg['data']['lng']);
+
+                        var newPosition = new google.maps.LatLng(data['lat'], data['lng']);
+
+                        if (cmd == 'plot' || cmd == 'scatter') {
+                            data['size'] = parseInt(msg['data']['size']);
+                        }
+
+                        if (cmd == 'init' && initMap == false) {
+                            initMap = true;
+                            map = new google.maps.Map(document.getElementById('map'), {
+                                zoom: data['zoom'],
+                                center: newPosition,
+                                mapTypeId: 'terrain'
+                            });
+
+                            flightPath = new google.maps.Polyline({
+                                geodesic: true,
+                                editable: true,
+                                strokeColor: '#FF0000',
+                                strokeOpacity: 1.0,
+                                strokeWeight: 2,
+                                map: map
+                            });
+
+                            flightPath.addListener('click', showPathInfo);
+
+                            infoWindow = new google.maps.InfoWindow;
+
+                            function showPathInfo(event) {
+                                var contentString = '<b>Location</b><br>' +
+                                        'Clicked location: <br>' + event.latLng.lat() + ',' + event.latLng.lng() +
+                                        '<br>';
+
+                                // Replace the info window's content and position.
+                                infoWindow.setContent(contentString);
+                                infoWindow.setPosition(event.latLng);
+
+                                infoWindow.open(map);
+                            }
+
+                            marker = new google.maps.Marker(newPosition);
+
+                            marker.setMap(map);
+                            console.log('init map done');
+                        }
+                        if (cmd == 'init' && initMap == true) {
+                            console.log('recenter');
+                            map.setCenter(newPosition);
+                            map.setZoom(data['zoom']);
+                        }
+
+                        if (cmd == 'plot') {
+                            var path = flightPath.getPath();
+                            path.push(newPosition);
+                            flightPath.setPath(path);
+                        }
+                         
+                        if (cmd == 'scatter') {
+
+                            var colorF;
+                            var CRed = '#FF0000',CGreen = '#00FF00',CBlue = '#0000FF'
+                            if (msg['data']['color'] == 'green') {
+                                colorF = CGreen;
+                            } else if(msg['data']['color'] == 'red') {
+                                colorF = CRed;
+                            } else if(msg['data']['color'] == 'blue') {
+                                colorF = CBlue
+                            }
+                            console.log('data is   ', msg['data']['color'])
+                            console.log('color is', colorF)
+                            // Add the circle for this city to the map.
+                            var dot = new google.maps.Circle({
+                                strokeColor: colorF, //green #00FF00
+                                strokeOpacity: 0.8,
+                                strokeWeight: 1,
+                                fillColor: colorF,
+                                fillOpacity: 0.35,
+                                map: map,
+                                center: newPosition,
+                                radius: 0.4
+                            });
+                            console.log(dot)
+                            google.maps.event.addListener(dot, 'click', function showCircleInfo(ev) {
+                                infoWindow.setPosition(ev.latLng);
+                                var contentString = '<b>Location</b><br>' +
+                                        'Clicked location: <br>' + ev.latLng.lat() + ',' + ev.latLng.lng() +
+                                        '<br>';
+                                infoWindow.setContent(contentString);
+                                infoWindow.open(map);
+                            });
+
+                            flightDots.push(dot);
+                        }
+
+                        // marker is the latest point
+                        marker.setPosition(newPosition);
+
+                        if (cmd == 'clear') {
+                            marker.setMap(null);
+                            if (flightPath != null) {
+                                flightPath.setMap(null);
+                            }
+                            if (flightDots != null) {
+                                flightDots.forEach(function (val, i) {
+                                            val.setMap(null);
+                                        }
+                                );
+                            }
+                            initMap = false;
+                        }
+
+                    }
+            );
+
+        });
+
+    </script>
+</head>
+
+<body>
+<h1>VSimple</h1>
+<div id="map"></div>
+</body>
+</html>
