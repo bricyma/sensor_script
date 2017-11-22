@@ -9,6 +9,8 @@ import rosbag
 import sys
 import numpy as np
 import math
+from llh2enu.llh2enu_gps_transformer import *
+
 EARTH_RADIUS = 6378137.0
 
 class Orientation:
@@ -24,10 +26,15 @@ class Orientation:
         self.data = {}
         self.baseLat = 0.693143165823  #caofeidian
         self.baseLon = 2.04736661229
-
+        self.transform = gps_transformer()
         self.baseLat = self.DEG2RAD(39.03775082210)
         self.baseLon = self.DEG2RAD(118.43091220755)
 
+        self.baseLat = self.RAD2DEG(self.baseLat)
+        self.baseLon = self.RAD2DEG(self.baseLon)
+
+        self.baseLat = 39.714178
+        self.baseLon = 117.305466
         print 'baseLat: ', self.baseLat
         print 'baseLon: ', self.baseLon
 
@@ -37,7 +44,9 @@ class Orientation:
         self.data['lon'] = []
         self.data['yaw'] = []
         self.data['cal_diff'] = []
-
+        self.data['best_yaw'] = []
+        for topic, msg, t in self.bag.read_messages(topics=['/novatel_data/bestvel']):
+            self.data['best_yaw'].append(msg.trk_gnd)
         for topic, msg, t in self.bag.read_messages(topics=['/calibrate/diff']):
             if msg.data > 2 or msg.data < -2:
                 msg.data = 0
@@ -57,11 +66,19 @@ class Orientation:
             if i + 2 > len(self.data['lat']):
                 break
             lon = self.data['lon'][i]
-            x, y = self.latlon2xy(lat, lon)
+            # method1: octopus
+            x, y = self.transform.llh2enu_3(lat, lon, self.baseLat, self.baseLon)
+            #x, y = self.latlon2xy2(lat, lon)
+
+            # method2: kitti
+            xx, yy = self.latlon2xy(lat, lon)
 
             lat2 = self.data['lat'][i+1]
-            lng2 = self.data['lon'][i+1]
-            x2, y2 = self.latlon2xy(lat2, lng2)
+            lon2 = self.data['lon'][i+1]
+
+            # x2, y2 = self.latlon2xy2(lat2, lon2)
+            x2, y2 = self.transform.llh2enu_3(lat2, lon2, self.baseLat, self.baseLon)
+
             gps_yaw = self.RAD2DEG(np.arctan2(x2-x, y2-y))
             if gps_yaw < 0:
                 gps_yaw += 360
@@ -79,24 +96,27 @@ class Orientation:
     def compare(self):
         yaw1 = np.array(self.data['yaw'])
         yaw2 = np.array(self.data['gps_yaw'])
-
         self.diff = yaw2 - yaw1[:-1]
         for i, unit in enumerate(self.diff):
             if unit > 2 or unit < -2:
                 self.diff[i] = 0
+        print yaw2, yaw1
         print 'mean diff: ', np.mean(self.diff)
 
     def plot(self):
-        plt.subplot(311)
+        plt.subplot(411)
         plt.plot(self.data['yaw'], 'r', label='yaw')
         plt.plot(self.data['gps_yaw'], 'b', label='orientation from gps')
         plt.legend(loc='upper left')
-        plt.subplot(312)
+        plt.subplot(412)
         plt.plot(self.diff, 'r', label='gps_yaw-inspvax')
         plt.legend(loc='upper left')
-        plt.subplot(313)
-        plt.plot(self.data['cal_diff'], 'b', label='bestvel-inspvax ')
+        plt.subplot(413)
+        # plt.plot(self.data['cal_diff'], 'b', label='bestvel-inspvax ')
+        plt.plot(self.data['best_yaw'][::2], 'b', label='bestvel')
+        plt.plot(self.data['yaw'][::5],'r', label='inspvax yaw')
         plt.legend(loc='upper left')
+
         plt.show()
 
 
@@ -117,6 +137,7 @@ class Orientation:
         return tx, ty
 
     # there is some problem in it
+    # there is some problem in it
     def latlon2xy2(self, lat_, lon_):
         lat, lon = self.DEG2RAD(lat_), self.DEG2RAD(lon_)
         xx = math.cos(lat) * math.cos(lon) * math.cos(self.baseLon) * math.cos(self.baseLat) \
@@ -125,7 +146,7 @@ class Orientation:
         yy = -math.cos(lat) * math.cos(lon) * math.sin(self.baseLon) \
             + math.cos(lat) * math.sin(lon) * math.cos(self.baseLon)
         zz = -math.cos(lat) * math.cos(lon) * math.cos(self.baseLon) * math.sin(self.baseLat) \
-             - math.cos(lat) * math.sin(lon) * math.sin(self.baseLon) * math.sin(self.baseLat) \
+            - math.cos(lat) * math.sin(lon) * math.sin(self.baseLon) * math.sin(self.baseLat) \
             + math.sin(lat) * math.cos(self.baseLat)
         x = math.atan2(yy, xx) * EARTH_RADIUS
         y = math.log(math.tan(math.asin(zz) / 2 + math.pi / 4)) * EARTH_RADIUS
@@ -136,7 +157,8 @@ class Orientation:
         self.gps2orientation()
         self.compare()
 
-        print 'average gps_yaw: ', np.mean(self.data['gps_yaw'])
+        print 'base lat: ', self.baseLat
+        print 'octopus average gps_yaw: ', np.mean(self.data['gps_yaw'])
         self.plot()
 
 
