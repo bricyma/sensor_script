@@ -87,7 +87,7 @@ class gps_transformer():
         return x * (180 / math.pi)
 
     # octopus transformation
-    def llh2enu5(self, lat_, lon_, baseLat, baseLon):
+    def llh2enu_5(self, lat_, lon_, h, baseLat, baseLon, h0):
         lat, lon = self.DEG2RAD(lat_), self.DEG2RAD(lon_)
         baseLat = self.DEG2RAD(baseLat)
         baseLon = self.DEG2RAD(baseLon)
@@ -109,7 +109,7 @@ class gps_transformer():
         x, y, _ = self.ecef2enu(x_, y_, z_, lat0, lon0, h0)
         return x, y
 
-    def llh2enu_3(self, lat_, lon_, baseLat_, baseLon_):
+    def llh2enu_3(self, lat_, lon_, h,  baseLat_, baseLon_, h0):
         s = math.cos(baseLat_ * math.pi / 180)
         x = s * a * math.pi * lon_ / 180
         y = s * a * math.log(math.tan(math.pi * (90 + lat_) / 360))
