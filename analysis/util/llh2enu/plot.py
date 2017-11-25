@@ -6,7 +6,7 @@ import sys
 
 class GPSPlot():
     def __init__(self):
-        bag_path = '/home/bricy/workspace/rosbag/'
+        bag_path = '/home/zhibei/workspace/rosbag/'
         # bagname = bag_path + '_2017-09-24-17-22-14_6.bag'
         bagname = bag_path + sys.argv[1]
         self.bag = rosbag.Bag(bagname)
@@ -23,17 +23,22 @@ class GPSPlot():
         self.lon0 = 0
 
     def read_bag(self):
-        for topic, msg, t in self.bag.read_messages(topics=['/novatel_data/bestpos']):
+        for topic, msg, t in self.bag.read_messages(topics=['/novatel_data/inspvax']):
             test = gps_transformer()
             if not self.first_flag:
-                self.lat0 = msg.latitude
-                self.lon0 = msg.longitude
+                # self.lat0 = msg.latitude
+                # self.lon0 = msg.longitude
                 self.first_flag = True
                 # self.lat0 = 39.714178
                 # self.lon0 = 117.305466
 
-                # self.lat0 = 39.03775082210
-                # self.lon0 = 118.43091220755
+                self.lat0 = 39.03775082210
+                self.lon0 = 118.43091220755
+
+                # San Deigo
+                # self.lat0 = 32.694052
+                # self.lon0 = -113.958389
+
                 # self.lat0 = self.lat0 * np.pi / 180
                 # self.lon0 = self.lon0 * np.pi / 180
                 x1_0, y1_0 = test.llh2enu_1(self.lat0, self.lon0, 0, self.lat0, self.lon0, 0)
@@ -83,24 +88,27 @@ class GPSPlot():
 
 
     def plot(self):
-        plt.subplot(411)
-        plt.plot(self.x1, self.y1, 'b', label='defence')
+        plt.subplot(511)
+        plt.plot(self.x1, self.y1, 'black', linewidth=3, label='defence')
+        plt.legend(loc='upper left')
+        plt.subplot(512)
+        plt.plot(self.x2, self.y2, 'y', linewidth=3, label='wiki')
+        plt.legend(loc='upper left')
+        plt.subplot(513)
+        plt.plot(self.x3, self.y3, 'g', linewidth=3, label='kitti')
+        plt.legend(loc='upper left')
+        plt.subplot(514)
+        plt.plot(self.x5, self.y5, 'r', linewidth=3, label='octopus')
+        plt.legend(loc='upper left')
+        plt.subplot(515)
+        plt.plot(self.x5, self.y5, 'r', label='octopus')
         plt.plot(self.x2, self.y2, 'y', label='wiki')
+        plt.plot(self.x5, self.y5, 'r', label='octopus')
         plt.plot(self.x3, self.y3, 'g', label='kitti')
-        plt.plot(self.x5, self.y5, 'r', label='octopus')
-        plt.legend(loc='upper right')
-        plt.subplot(412)
-        plt.plot(self.x2, self.y2, 'b', label='wiki')
-        plt.legend(loc='upper left')
-        plt.subplot(413)
-        plt.plot(self.x3, self.y3, 'b', label='kitti')
-        plt.legend(loc='upper left')
-        plt.subplot(414)
-        plt.plot(self.x5, self.y5, 'r', label='octopus')
+        plt.plot(self.x1, self.y1, 'black', label='defense')
         plt.legend(loc='upper left')
 
         plt.show()
-
     # return the distance between (x,y) and (x0,y0)
     def dist(self, x, y, x0, y0):
         return np.sqrt((x-x0)**2 + (y-y0)**2)

@@ -109,6 +109,7 @@ class gps_transformer():
         x, y, _ = self.ecef2enu(x_, y_, z_, lat0, lon0, h0)
         return x, y
 
+    # kitti
     def llh2enu_3(self, lat_, lon_, baseLat_, baseLon_):
         s = math.cos(baseLat_ * math.pi / 180)
         x = s * a * math.pi * lon_ / 180
