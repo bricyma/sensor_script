@@ -22,19 +22,23 @@ class Orientation:
         self.east_vel = []
         self.yaw = []
         self.ori_vel = []  # orientation calculated from east_velocity and north_velocity
-        self.diff = []   # yaw - orientation_from
+        self.diff = []   # gps yaw - inspvax
+        self.diff2 = []  # bestvel - inspvax
         self.data = {}
-        self.baseLat = 0.693143165823  #caofeidian
+        self.baseLat = 0.693143165823 # caofeidian
         self.baseLon = 2.04736661229
         self.transform = gps_transformer()
-        self.baseLat = self.DEG2RAD(39.03775082210) # wuhudao
-        self.baseLon = self.DEG2RAD(118.43091220755)
+        self.baseLat = 39.03775082210  # wuhudao
+        self.baseLon = 118.43091220755
 
-        self.baseLat = self.RAD2DEG(self.baseLat)
-        self.baseLon = self.RAD2DEG(self.baseLon)
+        # self.baseLat = 31.344678  # shanghai
+        # self.baseLon = 121.379186
 
-        self.baseLat = 39.714178  # beijing
-        self.baseLon = 117.305466
+        # self.baseLat = 39.714178  # beijing
+        # self.baseLon = 117.305466
+        # self.baseLat = 32.694052  # san diego
+        # self.baseLon = -113.958389
+
         print 'baseLat: ', self.baseLat
         print 'baseLon: ', self.baseLon
 
@@ -52,7 +56,7 @@ class Orientation:
                 msg.data = 0
             self.data['cal_diff'].append(msg.data)
 
-        first_flag = True # choose the start point as the base
+        first_flag = False  # choose the start point as the base, if True
         for topic, msg, t in self.bag.read_messages(topics=['/novatel_data/inspvax']):
             if first_flag:
                 self.baseLat = msg.latitude
@@ -71,20 +75,12 @@ class Orientation:
             if i + 2 > len(self.data['lat']):
                 break
             lon = self.data['lon'][i]
-            # method1: octopus
-            x, y = self.transform.llh2enu_1(lat, lon, 0, self.baseLat, self.baseLon, 0)
-            #x, y = self.latlon2xy2(lat, lon)
+            x, y = self.transform.llh2enu_5(lat, lon, 0, self.baseLat, self.baseLon, 0)
+            lat2 = self.data['lat'][i + 1]
+            lon2 = self.data['lon'][i + 1]
+            x2, y2 = self.transform.llh2enu_5(lat2, lon2, 0, self.baseLat, self.baseLon, 0)
 
-            # method2: kitti
-            xx, yy = self.latlon2xy(lat, lon)
-
-            lat2 = self.data['lat'][i+1]
-            lon2 = self.data['lon'][i+1]
-
-            # x2, y2 = self.latlon2xy2(lat2, lon2)
-            x2, y2 = self.transform.llh2enu_1(lat2, lon2, 0, self.baseLat, self.baseLon, 0)
-
-            gps_yaw = self.RAD2DEG(np.arctan2(x2-x, y2-y))
+            gps_yaw = self.RAD2DEG(np.arctan2(x2 - x, y2 - y))
             if gps_yaw < 0:
                 gps_yaw += 360
             self.data['gps_yaw'].append(gps_yaw)
@@ -101,12 +97,22 @@ class Orientation:
     def compare(self):
         yaw1 = np.array(self.data['yaw'])
         yaw2 = np.array(self.data['gps_yaw'])
+        yaw_ins = np.array(self.data['yaw'][::5])
+        yaw_gps = np.array(self.data['best_yaw'][::2])
+
+        size = len(yaw_ins) if len(yaw_ins) < len(yaw_gps) else len(yaw_gps)
+        yaw_ins = yaw_ins[0:size]
+        yaw_gps = yaw_gps[0:size]
+        self.diff2 = yaw_gps - yaw_ins
+        self.diff2[self.diff2 > 0.5] = 0
+        self.diff2[self.diff2 < -0.5] = 0
+
         self.diff = yaw2 - yaw1[:-1]
-        for i, unit in enumerate(self.diff):
-            if unit > 2 or unit < -2:
-                self.diff[i] = 0
-        print yaw2, yaw1
+        self.diff[self.diff > 0.5] = 0
+        self.diff[self.diff < -0.5] = 0
+
         print 'mean diff: ', np.mean(self.diff)
+        print 'mean diff2 bestvel: ', np.mean(self.diff2)
 
     def plot(self):
         plt.subplot(411)
@@ -121,7 +127,9 @@ class Orientation:
         plt.plot(self.data['best_yaw'][::2], 'b', label='bestvel')
         plt.plot(self.data['yaw'][::5],'r', label='inspvax yaw')
         plt.legend(loc='upper left')
-
+        plt.subplot(414)
+        plt.plot(self.diff2, 'r', label='bestvel-inspvax')
+        plt.legend(loc='upper left')
         plt.show()
 
 
@@ -136,26 +144,10 @@ class Orientation:
     def latlon2xy(self, lat, lon):
         er = 6378137.0
         lat0 = 0
-        s = np.cos(lat0 * math.pi / 180)
+        s = np.cos(self.baseLat * math.pi / 180)
         tx = s * er * math.pi * lon / 180.0
         ty = s * er * np.log(np.tan((90.0 + lat) * math.pi / 360.0))
         return tx, ty
-
-    # there is some problem in it
-    # there is some problem in it
-    def latlon2xy2(self, lat_, lon_):
-        lat, lon = self.DEG2RAD(lat_), self.DEG2RAD(lon_)
-        xx = math.cos(lat) * math.cos(lon) * math.cos(self.baseLon) * math.cos(self.baseLat) \
-            + math.cos(lat) * math.sin(lon) * math.sin(self.baseLon) * math.cos(self.baseLat) \
-            + math.sin(lat) * math.sin(self.baseLat)
-        yy = -math.cos(lat) * math.cos(lon) * math.sin(self.baseLon) \
-            + math.cos(lat) * math.sin(lon) * math.cos(self.baseLon)
-        zz = -math.cos(lat) * math.cos(lon) * math.cos(self.baseLon) * math.sin(self.baseLat) \
-            - math.cos(lat) * math.sin(lon) * math.sin(self.baseLon) * math.sin(self.baseLat) \
-            + math.sin(lat) * math.cos(self.baseLat)
-        x = math.atan2(yy, xx) * EARTH_RADIUS
-        y = math.log(math.tan(math.asin(zz) / 2 + math.pi / 4)) * EARTH_RADIUS
-        return x, y
 
     def run(self):
         self.readbag()
