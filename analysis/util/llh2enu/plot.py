@@ -4,6 +4,7 @@ import rosbag
 import numpy as np
 import sys
 
+
 class GPSPlot():
     def __init__(self):
         bag_path = '/home/zhibei/workspace/rosbag/'
@@ -34,6 +35,8 @@ class GPSPlot():
 
                 self.lat0 = 39.03775082210
                 self.lon0 = 118.43091220755
+                self.baseLat = 39.03775082210  # wuhudao
+                self.baseLon = 118.43091220755
 
                 # San Deigo
                 # self.lat0 = 32.694052
@@ -41,17 +44,21 @@ class GPSPlot():
 
                 # self.lat0 = self.lat0 * np.pi / 180
                 # self.lon0 = self.lon0 * np.pi / 180
-                x1_0, y1_0 = test.llh2enu_1(self.lat0, self.lon0, 0, self.lat0, self.lon0, 0)
-                x2_0, y2_0 = test.llh2enu_2(self.lat0, self.lon0, 0, self.lat0, self.lon0, 0)
-                x3_0, y3_0 = test.llh2enu_3(self.lat0, self.lon0, self.lat0, self.lon0)
-                x5_0, y5_0 = test.llh2enu5(self.lat0, self.lon0, self.lat0, self.lon0)
+                x1_0, y1_0 = test.llh2enu_1(
+                    self.lat0, self.lon0, 0, self.lat0, self.lon0, 0)
+                x2_0, y2_0 = test.llh2enu_2(
+                    self.lat0, self.lon0, 0, self.lat0, self.lon0, 0)
+                x3_0, y3_0 = test.llh2enu_3(
+                    self.lat0, self.lon0, 0, self.lat0, self.lon0, 0)
+                x5_0, y5_0 = test.llh2enu_5(
+                    self.lat0, self.lon0, 0, self.lat0, self.lon0, 0)
             else:
                 lat = msg.latitude
                 lon = msg.longitude
                 x1, y1 = test.llh2enu_1(lat, lon, 0, self.lat0, self.lon0, 0)
-                x5, y5 = test.llh2enu5(lat, lon, self.lat0, self.lon0)
+                x5, y5 = test.llh2enu_5(lat, lon, 0, self.lat0, self.lon0, 0)
                 x2, y2 = test.llh2enu_2(lat, lon, 0, self.lat0, self.lon0, 0)
-                x3, y3 = test.llh2enu_3(lat, lon, self.lat0, self.lon0)
+                x3, y3 = test.llh2enu_3(lat, lon, 0, self.lat0, self.lon0, 0)
                 # method referenced http://digext6.defence.gov.au/dspace/bitstream/1947/3538/1/DSTO-TN-0432.pdf
                 if len(self.x1) > 0:
                     self.x1.append(x1 - self.x1[0])
@@ -86,7 +93,6 @@ class GPSPlot():
         self.x5[0] = 0
         self.y5[0] = 0
 
-
     def plot(self):
         plt.subplot(511)
         plt.plot(self.x1, self.y1, 'black', linewidth=3, label='defence')
@@ -110,12 +116,14 @@ class GPSPlot():
 
         plt.show()
     # return the distance between (x,y) and (x0,y0)
+
     def dist(self, x, y, x0, y0):
-        return np.sqrt((x-x0)**2 + (y-y0)**2)
+        return np.sqrt((x - x0)**2 + (y - y0)**2)
 
     def run(self):
         self.read_bag()
         self.plot()
+
 
 if __name__ == '__main__':
     p = GPSPlot()

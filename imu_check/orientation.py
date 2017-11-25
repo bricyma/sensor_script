@@ -13,19 +13,20 @@ from llh2enu.llh2enu_gps_transformer import *
 
 EARTH_RADIUS = 6378137.0
 
+
 class Orientation:
     def __init__(self, bagname):
         bag_path = ''
         bag = bag_path + bagname
         self.bag = rosbag.Bag(bag)
-        self.north_vel= []
+        self.north_vel = []
         self.east_vel = []
         self.yaw = []
         self.ori_vel = []  # orientation calculated from east_velocity and north_velocity
         self.diff = []   # gps yaw - inspvax
         self.diff2 = []  # bestvel - inspvax
         self.data = {}
-        self.baseLat = 0.693143165823 # caofeidian
+        self.baseLat = 0.693143165823  # caofeidian
         self.baseLon = 2.04736661229
         self.transform = gps_transformer()
         self.baseLat = 39.03775082210  # wuhudao
@@ -41,7 +42,6 @@ class Orientation:
 
         print 'baseLat: ', self.baseLat
         print 'baseLon: ', self.baseLon
-
 
     def readbag(self):
         self.data['lat'] = []
@@ -75,10 +75,12 @@ class Orientation:
             if i + 2 > len(self.data['lat']):
                 break
             lon = self.data['lon'][i]
-            x, y = self.transform.llh2enu_5(lat, lon, 0, self.baseLat, self.baseLon, 0)
+            x, y = self.transform.llh2enu_5(
+                lat, lon, 0, self.baseLat, self.baseLon, 0)
             lat2 = self.data['lat'][i + 1]
             lon2 = self.data['lon'][i + 1]
-            x2, y2 = self.transform.llh2enu_5(lat2, lon2, 0, self.baseLat, self.baseLon, 0)
+            x2, y2 = self.transform.llh2enu_5(
+                lat2, lon2, 0, self.baseLat, self.baseLon, 0)
 
             gps_yaw = self.RAD2DEG(np.arctan2(x2 - x, y2 - y))
             if gps_yaw < 0:
@@ -88,9 +90,11 @@ class Orientation:
     def orientation_from_velocity(self):
         for i in range(0, len(self.north_vel)):
             if np.arctan2(self.east_vel[i], self.north_vel[i]) < 0:
-                cur_ori = np.arctan2(self.east_vel[i], self.north_vel[i]) * 180 / np.pi + 360
+                cur_ori = np.arctan2(
+                    self.east_vel[i], self.north_vel[i]) * 180 / np.pi + 360
             else:
-                cur_ori = np.arctan2(self.east_vel[i], self.north_vel[i]) * 180 / np.pi
+                cur_ori = np.arctan2(
+                    self.east_vel[i], self.north_vel[i]) * 180 / np.pi
 
             self.ori_vel.append(cur_ori)
 
@@ -125,13 +129,12 @@ class Orientation:
         plt.subplot(413)
         # plt.plot(self.data['cal_diff'], 'b', label='bestvel-inspvax ')
         plt.plot(self.data['best_yaw'][::2], 'b', label='bestvel')
-        plt.plot(self.data['yaw'][::5],'r', label='inspvax yaw')
+        plt.plot(self.data['yaw'][::5], 'r', label='inspvax yaw')
         plt.legend(loc='upper left')
         plt.subplot(414)
         plt.plot(self.diff2, 'r', label='bestvel-inspvax')
         plt.legend(loc='upper left')
         plt.show()
-
 
     # latitude longiutde to enu
     def DEG2RAD(self, x):
