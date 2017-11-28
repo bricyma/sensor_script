@@ -47,7 +47,7 @@ class gps_transformer():
         denu = (de, dn)
         return denu
 
-    # method referecenced wiki_pedia
+    # method referecenced wikipedia
     def llh2ecef(self, lat, lon, h):
         phi, lam = self.deg2rad(lat), self.deg2rad(lon)
         s = math.sin(phi)

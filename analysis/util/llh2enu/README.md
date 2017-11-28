@@ -1,81 +1,91 @@
-**llh2enu_gps_transformer.py Documentation**
-----
-  This python file ontains 4 APIs which convert llh value to enu value using different conversion ways.
+# Documentation
 
+## plot.py 
+
+Visualize the path under different llh2enu transformation methods.
+### usage:
+    
+    ```
+    cd sensor_script/analysis/util
+    sh ./init.sh 
+    python plot.py test.bag 
+    ```
+    
+    The default rosbag path is /home/zhibei/workspace/rosbag/
+
+## llh2enu_gps_transformer.py 
+
+### usage
+
+    ```
+    from llh2enu_gps_transformer import gps_transformer
+    g = gps_transformer()
+    x, y = g.llh2enu_1(lat, lon, h, lat0, lon0, h0)
+    ```
+
+### API
 * **llh2enu_1**
+    
+    method referenced http://digext6.defence.gov.au/dspace/bitstream/1947/3538/1/DSTO-TN-0432.pdf 
 
-   	**Input:**
-   	lat: latitude to be converted <br>
-   	lon: longitude to be converted <br>
-   	altitude: altitude to be converted <br>
-   	lat0: base latitude <br>
-   	lon0: base longtitude <br>
+   	**Input**:
+   	lat: latitude to be converted 
+   	lon: longitude to be converted 
+   	altitude: altitude to be converted 
+   	lat0: base latitude 
+   	lon0: base longtitude 
    	h0: base altitude
    	
    	**Output:**
-   	de: east coordinate <br>
+   	de: east coordinate 
    	dn: north coordinate
    	
 * **llh2enu_2**
-
-   	**Input:**
-   	lat: latitude to be converted <br>
-   	lon: longitude to be converted <br>
-   	altitude: altitude to be converted <br>
-   	lat0: base latitude <br>
-   	lon0: base longtitude <br>
+    
+    method referecenced wikipedia
+   	
+   	**Input**:
+   	lat: latitude to be converted 
+   	lon: longitude to be converted 
+   	altitude: altitude to be converted 
+   	lat0: base latitude 
+   	lon0: base longtitude 
    	h0: base altitude
    	
    	**Output:**
-   	x: east coordinate <br>
+   	x: east coordinate 
    	y: north coordinate
    	
 * **llh2enu_3**
-
+    
+    kitti method
+    
    	**Input:**
-   	lat_: latitude to be converted <br>
-   	lon_: longitude to be converted <br>
-   	baseLat_: base latitude <br>
+   	lat_: latitude to be converted 
+   	lon_: longitude to be converted 
+   	h:
+   	baseLat_: base latitude 
    	baseLon_: base longtitude
    	
    	**Output:**
-   	x: east coordinate <br>
+   	x: east coordinate 
    	y: north coordinate
+ 
    
-* **llh2enu_4 (llh2ecef + ecef2enu)**
-
-	**Input:**
-   	lat: latitude to be converted <br>
-   	lon: longitude to be converted <br>
-   	h: altitude to be converted <br>
-   	lat0: base latitude <br>
-   	lon0: base longtitude <br>
-   	h0: base altitude
+* **llh2enu_5**
+    
+    octopus method
+    
+  	**Input:**
+   	lat_: latitude to be converted 
+   	lon_: longitude to be converted 
+   	h:
+   	baseLat_: base latitude 
+   	baseLon_: base longtitude
    	
    	**Output:**
-   	de: east coordinate <br>
-   	dn: north coordinate <br>
-   	du: up coordinate
-   	
+   	x: east coordinate 
+   	y: north coordinate
+   
 
-**Sample Call:**
--------------
-Solution 1:
-  ```
-  de, dn = llh2enu_1(lat, lon, h, lat0, lon0, h0)
-  ```
-  
-Solution 2:
-  ```
-  x, y = llh2enu_2(lat, lon, h, lat0, lon0, h0)
-  ```
-  
-Solution 3:
-  ```
-  x, y = llh2enu_3(lat_, lon_, baseLat_, baseLon_)
-  ```
-  
-Solution 4:
-  ```
- de, dn, du = llh2enu_4(lat, lon, h, lat0, lon0, h0)
-  ```
+
