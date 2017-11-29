@@ -40,6 +40,7 @@ class XsensAnalysis:
 
     def readbag(self):
         self.data['novatel'] = {}
+        self.data['xsens'] = {}
         key = ['lat', 'lon', 'x', 'y', 'yaw']
         for k in key:
             self.data['novatel'][k] = []
@@ -59,41 +60,49 @@ class XsensAnalysis:
             self.data['novatel']['x'].append(x)
             self.data['novatel']['y'].append(y)
 
-        for topic, msg, t in self.bag.read_messages(topics=['/xsens/imupos']):
+        for topic, msg, t in self.bag.read_messages(topics=['/xsens_driver/imupos']):
+            msg.yaw = msg.yaw * -1 + 90
             self.data['xsens']['yaw'].append(msg.yaw)
             x, y = self.transform.llh2enu_5(
                 msg.latitude, msg.longitude, 0, self.baseLat, self.baseLon, 0)
             self.data['xsens']['x'].append(x)
             self.data['xsens']['y'].append(y)
 
-    self.bag.close()
+        self.bag.close()
 
     def compare(self):
-        s
-        lf.data['diff'] = np.array([])
+        self.data['diff'] = np.array([])
         self.data['diff_x'] = np.array([])
         self.data['diff_y'] = np.array([])
         self.data['diff_pos'] = np.array([])
         self.data['novatel']['yaw'] = np.array(self.data['novatel']['yaw'])
         self.data['xsens']['yaw'] = np.array(self.data['xsens']['yaw'])
         # list to numpy array
-        size = len(self.data['novatel']['yaw']) if len(self.data['novatel']['yaw']) < len(self.data['xsens']['yaw'] else len(self.data['xsens']['yaw'])
+        if len(self.data['novatel']['yaw']) < len(self.data['xsens']['yaw']):
+            size = len(self.data['novatel']['yaw'])
+        else:
+            size = len(self.data['xsens']['yaw'])
         for sensor in self.data:
             for key in self.data[sensor]:
                 self.data[sensor][key]=np.array(self.data[sensor][key])[0:size]
 
-        self.data['diff']=self.data['novatel']['yaw'] -
-            self.data['xsens']['yaw']
-        self.data['diff'][self.diff > 3]=0
-        self.data['diff'][self.diff < -3]=0
+        self.data['diff'] = self.data['novatel']['yaw'] -self.data['xsens']['yaw']
+        self.data['diff'][self.data['diff'] > 5]=0
+        self.data['diff'][self.data['diff'] < -5]=0
 
-        self.data['diff_x']=self.data['novatel']['x'] -
+
+        self.data['diff_x']=self.data['novatel']['x'] -\
             self.data['xsens']['x']
-        self.data['diff_x']=self.data['novatel']['y'] -
+        self.data['diff_y']=self.data['novatel']['y'] -\
             self.data['xsens']['y']
+
+        print 'novatel x: ', self.data['novatel']['x']
+
+        print self.data['diff_x']
+
         self.data['diff_pos']=np.sqrt(
-            self.data['diff_x']**2 + sefl.data['diff_y']**2)
-        print 'mean diff: ', np.mean(self.diff)
+            self.data['diff_x']**2 + self.data['diff_y']**2)
+        print 'mean diff: ', np.mean(self.data['diff'])
         print 'mean pos diff: ', np.mean(self.data['diff_pos'])
 
     def plot(self):
@@ -118,11 +127,8 @@ class XsensAnalysis:
 
     def run(self):
         self.readbag()
-        self.gps2orientation()
         self.compare()
 
-        print 'base lat: ', self.baseLat
-        print 'octopus average gps_yaw: ', np.mean(self.data['gps_yaw'])
         self.plot()
 
 
