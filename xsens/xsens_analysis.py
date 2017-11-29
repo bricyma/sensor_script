@@ -62,6 +62,8 @@ class XsensAnalysis:
 
         for topic, msg, t in self.bag.read_messages(topics=['/xsens_driver/imupos']):
             msg.yaw = msg.yaw * -1 + 90
+            if msg.yaw < 0:
+                msg.yaw += 360
             self.data['xsens']['yaw'].append(msg.yaw)
             x, y = self.transform.llh2enu_5(
                 msg.latitude, msg.longitude, 0, self.baseLat, self.baseLon, 0)
