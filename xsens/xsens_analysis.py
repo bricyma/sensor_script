@@ -86,23 +86,24 @@ class XsensAnalysis:
             size = len(self.data['xsens']['yaw'])
         for sensor in self.data:
             for key in self.data[sensor]:
-                self.data[sensor][key]=np.array(self.data[sensor][key])[0:size]
+                self.data[sensor][key] = np.array(
+                    self.data[sensor][key])[0:size]
 
-        self.data['diff'] = self.data['novatel']['yaw'] -self.data['xsens']['yaw']
-        self.data['diff'][self.data['diff'] > 5]=0
-        self.data['diff'][self.data['diff'] < -5]=0
+        self.data['diff'] = self.data['novatel']['yaw'] - \
+            self.data['xsens']['yaw']
+        self.data['diff'][self.data['diff'] > 5] = 0
+        self.data['diff'][self.data['diff'] < -5] = 0
 
-
-        self.data['diff_x']=self.data['novatel']['x'] -\
+        self.data['diff_x'] = self.data['novatel']['x'] -\
             self.data['xsens']['x']
-        self.data['diff_y']=self.data['novatel']['y'] -\
+        self.data['diff_y'] = self.data['novatel']['y'] -\
             self.data['xsens']['y']
 
         print 'novatel x: ', self.data['novatel']['x']
 
         print self.data['diff_x']
 
-        self.data['diff_pos']=np.sqrt(
+        self.data['diff_pos'] = np.sqrt(
             self.data['diff_x']**2 + self.data['diff_y']**2)
         print 'mean diff: ', np.mean(self.data['diff'])
         print 'mean pos diff: ', np.mean(self.data['diff_pos'])
@@ -135,6 +136,6 @@ class XsensAnalysis:
 
 
 if __name__ == '__main__':
-    bag=sys.argv[1]
-    ori=XsensAnalysis(bag)
+    bag = sys.argv[1]
+    ori = XsensAnalysis(bag)
     ori.run()

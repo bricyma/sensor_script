@@ -50,7 +50,8 @@ if __name__ == '__main__':
         0, "/home/zhibei/Downloads/Beijing_Wuhudao_Forward_20171122_WHD.hdmap")
     m_whd._get_bounds()
     m_cfd = Compare(
-        1, "/home/zhibei/Downloads/Beijing_Wuhudao_Forward_20171122_CFD.hdmap")
+        # 1, "/home/zhibei/Downloads/Beijing_Wuhudao_Forward_20171122_CFD.hdmap")
+        1, "/home/zhibei/Downloads/Beijing_Wuhudao_Forward_TestOnly_20171128.hdmap")
     m_cfd._get_bounds()
     m_cfd = Compare(
         2, "/home/zhibei/.octopus/maps/Wuhudao_forward_0912.hdmap")
