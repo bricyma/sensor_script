@@ -15,10 +15,16 @@ EARTH_RADIUS = 6378137.0
 
 
 class XsensAnalysis:
-    def __init__(self, bagname):
-        bag_path = ''
-        bag = bag_path + bagname
-        self.bag = rosbag.Bag(bag)
+    def __init__(self):
+        self.bag_list = ['_2017-12-06-11-38-07_15.bag', '_2017-12-06-11-43-07_16.bag', '_2017-12-06-11-48-07_17.bag',
+                         '_2017-12-06-11-53-07_18.bag', '_2017-12-06-11-58-07_19.bag', '_2017-12-06-12-03-07_20.bag']
+
+        # self.bag_list = ['_2017-12-06-11-55-33_4.bag', '_2017-12-06-12-00-33_5.bag']
+
+        bag_path = '../../rosbag/gaosu/'
+        for i in range(0, len(self.bag_list)):
+            self.bag_list[i] = bag_path + self.bag_list[i]
+
         self.diff = []   # gps yaw - inspvax
         self.data = {}
         self.transform = gps_transformer()
@@ -47,30 +53,31 @@ class XsensAnalysis:
             self.data['xsens'][k] = []
 
         first_flag = False  # choose the start point as the base, if True
-        for topic, msg, t in self.bag.read_messages(topics=['/novatel_data/inspvax']):
-            if first_flag:
-                self.baseLat = msg.latitude
-                self.baseLon = msg.longitude
-                first_flag = False
-            self.data['novatel']['yaw'].append(msg.azimuth)
-            self.data['novatel']['lat'].append(msg.latitude)
-            self.data['novatel']['lon'].append(msg.longitude)
-            x, y = self.transform.llh2enu_5(
-                msg.latitude, msg.longitude, 0, self.baseLat, self.baseLon, 0)
-            self.data['novatel']['x'].append(x)
-            self.data['novatel']['y'].append(y)
+        for bag in self.bag_list:
+            bag = rosbag.Bag(bag)
+            for topic, msg, t in bag.read_messages(topics=['/novatel_data/inspvax']):
+                if first_flag:
+                    self.baseLat = msg.latitude
+                    self.baseLon = msg.longitude
+                    first_flag = False
+                self.data['novatel']['yaw'].append(msg.azimuth)
+                self.data['novatel']['lat'].append(msg.latitude)
+                self.data['novatel']['lon'].append(msg.longitude)
+                x, y = self.transform.llh2enu_5(
+                    msg.latitude, msg.longitude, 0, self.baseLat, self.baseLon, 0)
+                self.data['novatel']['x'].append(x)
+                self.data['novatel']['y'].append(y)
 
-        for topic, msg, t in self.bag.read_messages(topics=['/xsens_driver/imupos']):
-            msg.yaw = msg.yaw * -1 + 90
-            if msg.yaw < 0:
-                msg.yaw += 360
-            self.data['xsens']['yaw'].append(msg.yaw)
-            x, y = self.transform.llh2enu_5(
-                msg.latitude, msg.longitude, 0, self.baseLat, self.baseLon, 0)
-            self.data['xsens']['x'].append(x)
-            self.data['xsens']['y'].append(y)
-
-        self.bag.close()
+            for topic, msg, t in bag.read_messages(topics=['/xsens_driver/imupos']):
+                msg.yaw = msg.yaw * -1 + 90
+                if msg.yaw < 0:
+                    msg.yaw += 360
+                self.data['xsens']['yaw'].append(msg.yaw)
+                x, y = self.transform.llh2enu_5(
+                    msg.latitude, msg.longitude, 0, self.baseLat, self.baseLon, 0)
+                self.data['xsens']['x'].append(x)
+                self.data['xsens']['y'].append(y)
+            bag.close()
 
     def compare(self):
         self.data['diff'] = np.array([])
@@ -80,11 +87,9 @@ class XsensAnalysis:
         self.data['novatel']['yaw'] = np.array(self.data['novatel']['yaw'])
         self.data['xsens']['yaw'] = np.array(self.data['xsens']['yaw'])
 
-
-        for i in range(0, len(self.data['novatel']['yaw'])):
-            if self.data['novatel']['yaw'][i] < 10:
-                self.data['novatel']['yaw'][i] += 360
-
+        # for i in range(0, len(self.data['novatel']['yaw'])):
+            # if self.data['novatel']['yaw'][i] < 10:
+                # self.data['novatel']['yaw'][i] += 360
 
         # list to numpy array
         if len(self.data['novatel']['yaw']) < len(self.data['xsens']['yaw']):
@@ -124,6 +129,9 @@ class XsensAnalysis:
         plt.plot(self.data['diff'], 'r', label='novatel yaw - xsens yaw')
         plt.legend(loc='upper left')
         plt.subplot(413)
+        plt.xlim([0, 20000])
+        plt.xlim([-10000, 10000])
+
         plt.plot(self.data['novatel']['x'], self.data['novatel']
                  ['y'], 'r', label='novatel path')
         plt.plot(self.data['xsens']['x'], self.data['xsens']
@@ -143,6 +151,6 @@ class XsensAnalysis:
 
 
 if __name__ == '__main__':
-    bag = sys.argv[1]
-    ori = XsensAnalysis(bag)
+    # bag = sys.argv[1]
+    ori = XsensAnalysis()
     ori.run()
