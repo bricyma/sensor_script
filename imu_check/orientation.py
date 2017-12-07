@@ -40,6 +40,9 @@ class Orientation:
         # self.baseLat = 32.694052  # san diego
         # self.baseLon = -113.958389
 
+        self.baseLat = 32.819380    # AZ
+        self.baseLon = -111.683236
+
         print 'baseLat: ', self.baseLat
         print 'baseLon: ', self.baseLon
 
@@ -108,12 +111,12 @@ class Orientation:
         yaw_ins = yaw_ins[0:size]
         yaw_gps = yaw_gps[0:size]
         self.diff2 = yaw_gps - yaw_ins
-        self.diff2[self.diff2 > 0.5] = 0
-        self.diff2[self.diff2 < -0.5] = 0
+        self.diff2[self.diff2 > 1.5] = 0
+        self.diff2[self.diff2 < -1.5] = 0
 
         self.diff = yaw2 - yaw1[:-1]
-        self.diff[self.diff > 0.5] = 0
-        self.diff[self.diff < -0.5] = 0
+        self.diff[self.diff > 1.5] = 0
+        self.diff[self.diff < -1.5] = 0
 
         print 'mean diff: ', np.mean(self.diff)
         print 'mean diff2 bestvel: ', np.mean(self.diff2)

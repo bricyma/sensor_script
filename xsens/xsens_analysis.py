@@ -79,6 +79,13 @@ class XsensAnalysis:
         self.data['diff_pos'] = np.array([])
         self.data['novatel']['yaw'] = np.array(self.data['novatel']['yaw'])
         self.data['xsens']['yaw'] = np.array(self.data['xsens']['yaw'])
+
+
+        for i in range(0, len(self.data['novatel']['yaw'])):
+            if self.data['novatel']['yaw'][i] < 10:
+                self.data['novatel']['yaw'][i] += 360
+
+
         # list to numpy array
         if len(self.data['novatel']['yaw']) < len(self.data['xsens']['yaw']):
             size = len(self.data['novatel']['yaw'])
@@ -91,8 +98,8 @@ class XsensAnalysis:
 
         self.data['diff'] = self.data['novatel']['yaw'] - \
             self.data['xsens']['yaw']
-        self.data['diff'][self.data['diff'] > 5] = 0
-        self.data['diff'][self.data['diff'] < -5] = 0
+        # self.data['diff'][self.data['diff'] > 15] = 0
+        # self.data['diff'][self.data['diff'] < -15] = 0
 
         self.data['diff_x'] = self.data['novatel']['x'] -\
             self.data['xsens']['x']
@@ -120,7 +127,7 @@ class XsensAnalysis:
         plt.plot(self.data['novatel']['x'], self.data['novatel']
                  ['y'], 'r', label='novatel path')
         plt.plot(self.data['xsens']['x'], self.data['xsens']
-                 ['y'], 'r', label='xsens path')
+                 ['y'], 'b', label='xsens path')
         plt.legend(loc='upper left')
         plt.subplot(414)
         plt.plot(self.data['diff_pos'], 'r',
