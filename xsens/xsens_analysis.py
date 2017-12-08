@@ -16,8 +16,9 @@ EARTH_RADIUS = 6378137.0
 
 class XsensAnalysis:
     def __init__(self):
-        self.bag_list = ['_2017-12-06-11-38-07_15.bag', '_2017-12-06-11-43-07_16.bag', '_2017-12-06-11-48-07_17.bag',
-                         '_2017-12-06-11-53-07_18.bag', '_2017-12-06-11-58-07_19.bag', '_2017-12-06-12-03-07_20.bag']
+        self.bag_list = ['_2017-12-06-11-38-07_15.bag']
+        # , '_2017-12-06-11-43-07_16.bag', '_2017-12-06-11-48-07_17.bag',
+        # '_2017-12-06-11-53-07_18.bag', '_2017-12-06-11-58-07_19.bag', '_2017-12-06-12-03-07_20.bag']
 
         # self.bag_list = ['_2017-12-06-11-55-33_4.bag', '_2017-12-06-12-00-33_5.bag']
 
@@ -47,7 +48,7 @@ class XsensAnalysis:
     def readbag(self):
         self.data['novatel'] = {}
         self.data['xsens'] = {}
-        key = ['lat', 'lon', 'x', 'y', 'yaw']
+        key = ['lat', 'lon', 'x', 'y', 'yaw', 'pitch', 'roll']
         for k in key:
             self.data['novatel'][k] = []
             self.data['xsens'][k] = []
@@ -60,6 +61,8 @@ class XsensAnalysis:
                     self.baseLat = msg.latitude
                     self.baseLon = msg.longitude
                     first_flag = False
+                self.data['novatel']['pitch'].append(msg.pitch)
+                self.data['novatel']['roll'].append(msg.roll)
                 self.data['novatel']['yaw'].append(msg.azimuth)
                 self.data['novatel']['lat'].append(msg.latitude)
                 self.data['novatel']['lon'].append(msg.longitude)
@@ -67,12 +70,13 @@ class XsensAnalysis:
                     msg.latitude, msg.longitude, 0, self.baseLat, self.baseLon, 0)
                 self.data['novatel']['x'].append(x)
                 self.data['novatel']['y'].append(y)
-
             for topic, msg, t in bag.read_messages(topics=['/xsens_driver/imupos']):
                 msg.yaw = msg.yaw * -1 + 90
                 if msg.yaw < 0:
                     msg.yaw += 360
                 self.data['xsens']['yaw'].append(msg.yaw)
+                self.data['xsens']['roll'].append(msg.roll)
+                self.data['xsens']['pitch'].append(-msg.pitch)
                 x, y = self.transform.llh2enu_5(
                     msg.latitude, msg.longitude, 0, self.baseLat, self.baseLon, 0)
                 self.data['xsens']['x'].append(x)
@@ -88,8 +92,8 @@ class XsensAnalysis:
         self.data['xsens']['yaw'] = np.array(self.data['xsens']['yaw'])
 
         # for i in range(0, len(self.data['novatel']['yaw'])):
-            # if self.data['novatel']['yaw'][i] < 10:
-                # self.data['novatel']['yaw'][i] += 360
+        # if self.data['novatel']['yaw'][i] < 10:
+        # self.data['novatel']['yaw'][i] += 360
 
         # list to numpy array
         if len(self.data['novatel']['yaw']) < len(self.data['xsens']['yaw']):
@@ -121,14 +125,25 @@ class XsensAnalysis:
         print 'mean pos diff: ', np.mean(self.data['diff_pos'])
 
     def plot(self):
-        plt.subplot(411)
+        plt.subplot(611)
+        plt.plot(self.data['novatel']['pitch'], 'r', label='novatal pitch')
+        plt.plot(self.data['xsens']['pitch'], 'b', label='xsens pitch')
+        plt.legend(loc='upper left')
+        plt.subplot(612)
+        # plot the pitch diff between novatel and xsens
+        plt.plot(self.data['novatel']['pitch'] - self.data['xsens']
+                 ['pitch'], 'r', label='pitch diff between novatel and xsens')
+      # plt.plot(self.data['novatel']['roll'], 'r', label='novatal roll')
+        # plt.plot(self.data['xsens']['roll'], 'b', label='xsens roll')
+        plt.legend(loc='upper left')
+        plt.subplot(613)
         plt.plot(self.data['novatel']['yaw'], 'r', label='novatel yaw')
         plt.plot(self.data['xsens']['yaw'], 'b', label='xsens yaw')
         plt.legend(loc='upper left')
-        plt.subplot(412)
+        plt.subplot(614)
         plt.plot(self.data['diff'], 'r', label='novatel yaw - xsens yaw')
         plt.legend(loc='upper left')
-        plt.subplot(413)
+        plt.subplot(615)
         plt.xlim([0, 20000])
         plt.xlim([-10000, 10000])
 
@@ -137,7 +152,7 @@ class XsensAnalysis:
         plt.plot(self.data['xsens']['x'], self.data['xsens']
                  ['y'], 'b', label='xsens path')
         plt.legend(loc='upper left')
-        plt.subplot(414)
+        plt.subplot(616)
         plt.plot(self.data['diff_pos'], 'r',
                  label='pos diff between novatel and xsens')
         plt.legend(loc='upper left')
