@@ -1,5 +1,6 @@
 #!/usr/bin/env python
 
+import os
 import rosbag
 import rospy
 import sys
@@ -8,18 +9,16 @@ import matplotlib.pyplot as plt
 
 class RosbagChecker(object):
 
-    def __init__(self, bag):
-        self.bag = bag
+    def __init__(self, folder):
         self.time_diff = []
 
-    def check_bag(self):
-        bag = rosbag.Bag(self.bag)
-        time_diff = self.check_gps_sync(bag)
-        print 'time diff is: ', time_diff
-        if time_diff < 0.08:
-            print 'sync is ok'
-        else:
-            print 'sync failed'
+        print folder
+        for file in os.listdir(folder):
+            if file.endswith(".bag"):
+                print file
+                bag = rosbag.Bag(folder + '/' + file)
+                print 'bagname: ', file
+                self.check_gps_sync(bag)
 
     def check_gps_sync(self, bag):
         # Check if gps time is sync with pc time in a specific bag.
@@ -41,7 +40,11 @@ class RosbagChecker(object):
         rospy.loginfo(
             '[rosbag_recorder] check gps & pc time diff: ' + str(avg_diff) + 's.')
         # Sync if average difference less than 80ms
-        return avg_diff
+        print 'time diff is: ', avg_diff
+        if avg_diff < 0.135:
+            print '\033[32msync is ok'
+        else:
+            print '\033[31msync failed'
 
     def plot(self):
         plt.plot(self.time_diff, 'r.', label='time diff between pc and gps')
@@ -50,7 +53,6 @@ class RosbagChecker(object):
         plt.show()
 
 if __name__ == '__main__':
-    bagname = sys.argv[1]
-    checker = RosbagChecker(bagname)
-    checker.check_bag()
-    checker.plot()
+    folder = sys.argv[1]
+    checker = RosbagChecker(folder)
+    # checker.plot()
