@@ -16,7 +16,7 @@ EARTH_RADIUS = 6378137.0
 
 class Orientation:
     def __init__(self, bagname):
-        bag_path = ''
+        bag_path = '../../rosbag/'
         bag = bag_path + bagname
         self.bag = rosbag.Bag(bag)
         self.north_vel = []

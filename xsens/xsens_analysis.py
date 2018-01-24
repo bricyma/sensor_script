@@ -17,7 +17,9 @@ EARTH_RADIUS = 6378137.0
 
 class XsensAnalysis:
     def __init__(self):
-        self.bag_list = ['test.bag']
+        self.bag_list = []
+        self.bag_list.append(sys.argv[1])
+        # self.bag_list = ['test.bag']
         # , '_2017-12-06-11-43-07_16.bag', '_2017-12-06-11-48-07_17.bag',
         # '_2017-12-06-11-53-07_18.bag', '_2017-12-06-11-58-07_19.bag', '_2017-12-06-12-03-07_20.bag']
 
@@ -152,10 +154,10 @@ class XsensAnalysis:
         plt.legend(loc='upper left')
         plt.subplot(612)
         # plot the pitch diff between novatel and xsens
-        plt.plot(self.data['novatel']['pitch'] - self.data['xsens']
-                 ['pitch'], 'r', label='pitch diff between novatel and xsens')
-      # plt.plot(self.data['novatel']['roll'], 'r', label='novatal roll')
-        # plt.plot(self.data['xsens']['roll'], 'b', label='xsens roll')
+        # plt.plot(self.data['novatel']['pitch'] - self.data['xsens']
+                 # ['pitch'], 'r', label='pitch diff between novatel and xsens')
+        plt.plot(self.data['novatel']['roll'], 'r', label='novatal roll')
+        plt.plot(self.data['xsens']['roll'], 'b', label='xsens roll')
         plt.legend(loc='upper left')
         plt.subplot(613)
         plt.plot(self.data['novatel']['yaw'], 'r', label='novatel yaw')
