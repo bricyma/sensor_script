@@ -14,13 +14,15 @@ class PosType:
         bagname = bag_path + sys.argv[1]
         self.bag = rosbag.Bag(bagname)
         self.inspos = {}
-        self.namespace = ['novatel1', 'novatel2']
+        self.namespace = ['novatel6', 'novatel7']
         for ns in self.namespace:
             self.inspos[ns] = {}
             self.inspos[ns]['x'] = []
             self.inspos[ns]['y'] = []
             self.inspos[ns]['yaw'] = []
-
+            self.inspos[ns]['yaw_std'] = []
+            self.inspos[ns]['lat_std'] = []
+            self.inspos[ns]['pos_type'] = []  # 56: rtk fixed, 55: RTK float, 54: PSDIFF, 53: PSP 19: Propagated
         # caofeidian
         self.baseLat = self.DEG2RAD(39.5096245928)
         self.baseLon = self.DEG2RAD(118.110978652)
@@ -33,8 +35,10 @@ class PosType:
                     self.inspos[ns]['x'].append(x)
                     self.inspos[ns]['y'].append(y)
                     self.inspos[ns]['yaw'].append(msg.azimuth)
+                    self.inspos[ns]['yaw_std'].append(msg.azimuth_std)
+                    self.inspos[ns]['lat_std'].append(msg.latitude_std)
+                    self.inspos[ns]['pos_type'].append(msg.position_type)
         self.bag.close()
-        print self.inspos
 
     def DEG2RAD(self, x):
         return x / (180 / math.pi)
@@ -67,29 +71,39 @@ class PosType:
         ty = s * er * np.log(np.tan((90.0 + lat) * math.pi / 360.0))
         return tx, ty
 
-    def plot(self):
-        plt.subplot(211)
+    def plot_fig(self, n, num):
         i = 0
-        for ns in self.namespace:
-            if i==0:
-                plt.plot(self.inspos[ns]['x'], self.inspos[ns]['y'], 'bo', label=ns)
-                i = 1
-            else:
-                plt.plot(self.inspos[ns]['x'], self.inspos[ns]['y'], 'ro', label=ns)
+        if num == 2:
+            for ns in self.namespace:
+                if i == 0:
+                    plt.plot(self.inspos[ns]['x'],
+                             self.inspos[ns]['y'], 'bo', label=ns)
+                    i = 1
+                else:
+                    plt.plot(self.inspos[ns]['x'],
+                             self.inspos[ns]['y'], 'ro', label=ns)
+        else:
+            for ns in self.namespace:
+                if i == 0:
+                    plt.plot(self.inspos[ns][n], 'b', label=ns)
+                    i = 1
+                else:
+                    plt.plot(self.inspos[ns][n], 'r', label=ns)
         plt.legend(loc='upper left')
-        plt.title(sys.argv[1])
-        plt.subplot(212)
-        i = 0
-        for ns in self.namespace:
-            if i==0:
-                plt.plot(self.inspos[ns]['yaw'], 'b', label=ns)
-                i = 1
-            else:
-                plt.plot(self.inspos[ns]['yaw'], 'r', label=ns)
-        plt.legend(loc='upper left')
-        plt.title(sys.argv[1])
-        plt.show()
+        plt.title(n + ': ' + sys.argv[1])
 
+    def plot(self):
+        plt.subplot(511)
+        self.plot_fig('x', 2)
+        plt.subplot(512)
+        self.plot_fig('lat_std', 1)
+        plt.subplot(513)
+        self.plot_fig('yaw', 1)
+        plt.subplot(514)
+        self.plot_fig('yaw_std', 1)
+        plt.subplot(515)
+        self.plot_fig('pos_type', 1)
+        plt.show()
 
 if __name__ == '__main__':
     pos = PosType()

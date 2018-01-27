@@ -14,7 +14,7 @@ class PosType:
         bagname = bag_path + sys.argv[1]
         self.bag = rosbag.Bag(bagname)
         self.inspos = {}
-        self.namespace = ['novatel6', 'novatel7']
+        self.namespace = ['novatel1', 'novatel2']
         for ns in self.namespace:
             self.inspos[ns] = {}
             self.inspos[ns]['x'] = []

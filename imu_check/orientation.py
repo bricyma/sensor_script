@@ -131,7 +131,7 @@ class Orientation:
         plt.legend(loc='upper left')
         plt.subplot(413)
         # plt.plot(self.data['cal_diff'], 'b', label='bestvel-inspvax ')
-        plt.plot(self.data['best_yaw'][::2], 'b', label='bestvel')
+        # plt.plot(self.data['best_yaw'][::2], 'b', label='bestvel')
         plt.plot(self.data['yaw'][::5], 'r', label='inspvax yaw')
         plt.legend(loc='upper left')
         plt.subplot(414)
