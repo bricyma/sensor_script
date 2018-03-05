@@ -10,11 +10,11 @@ EARTH_RADIUS = 6378137.0
 
 class PosType:
     def __init__(self):
-        bag_path = '../../rosbag/'
+        bag_path = '../../rosbag/20180206/lmd/'
         bagname = bag_path + sys.argv[1]
         self.bag = rosbag.Bag(bagname)
         self.inspos = {}
-        self.namespace = ['novatel1', 'novatel2']
+        self.namespace = ['novatel6', 'novatel7']
         for ns in self.namespace:
             self.inspos[ns] = {}
             self.inspos[ns]['x'] = []
@@ -65,7 +65,6 @@ class PosType:
         return tx, ty
 
     def plot(self):
-        plt.subplot(211)
         i = 0
         for ns in self.namespace:
             if i==0:

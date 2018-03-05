@@ -10,7 +10,7 @@ EARTH_RADIUS = 6378137.0
 
 class PosType:
     def __init__(self):
-        bag_path = '../../rosbag/'
+        bag_path = '../../rosbag/20180206/whd/'
         bagname = bag_path + sys.argv[1]
         self.bag = rosbag.Bag(bagname)
         self.inspos = {}
@@ -24,20 +24,19 @@ class PosType:
             self.inspos[ns]['lat_std'] = []
             self.inspos[ns]['pos_type'] = []  # 56: rtk fixed, 55: RTK float, 54: PSDIFF, 53: PSP 19: Propagated
         # caofeidian
-        self.baseLat = self.DEG2RAD(39.5096245928)
-        self.baseLon = self.DEG2RAD(118.110978652)
+        self.baseLat = self.DEG2RAD(38.9927082634)
+        self.baseLon = self.DEG2RAD(118.469187136)
 
     def readbag(self):
         for ns in self.namespace:
             for topic, msg, t in self.bag.read_messages(topics=['/' + ns + '/novatel_data/inspvax']):
-                if msg.header.gps_week_seconds % 100 == 0:
-                    x, y = self.latlon2xy(msg.latitude, msg.longitude)
-                    self.inspos[ns]['x'].append(x)
-                    self.inspos[ns]['y'].append(y)
-                    self.inspos[ns]['yaw'].append(msg.azimuth)
-                    self.inspos[ns]['yaw_std'].append(msg.azimuth_std)
-                    self.inspos[ns]['lat_std'].append(msg.latitude_std)
-                    self.inspos[ns]['pos_type'].append(msg.position_type)
+                x, y = self.latlon2xy(msg.latitude, msg.longitude)
+                self.inspos[ns]['x'].append(x)
+                self.inspos[ns]['y'].append(y)
+                self.inspos[ns]['yaw'].append(msg.azimuth)
+                self.inspos[ns]['yaw_std'].append(msg.azimuth_std)
+                self.inspos[ns]['lat_std'].append(msg.latitude_std)
+                self.inspos[ns]['pos_type'].append(msg.position_type)
         self.bag.close()
 
     def DEG2RAD(self, x):
@@ -73,6 +72,7 @@ class PosType:
 
     def plot_fig(self, n, num):
         i = 0
+        # plot x,y
         if num == 2:
             for ns in self.namespace:
                 if i == 0:
@@ -82,13 +82,13 @@ class PosType:
                 else:
                     plt.plot(self.inspos[ns]['x'],
                              self.inspos[ns]['y'], 'ro', label=ns)
-        else:
+        else:  # plot yaw, yaw_std, position_type
             for ns in self.namespace:
                 if i == 0:
                     plt.plot(self.inspos[ns][n], 'b', label=ns)
                     i = 1
                 else:
-                    plt.plot(self.inspos[ns][n], 'r', label=ns)
+                    plt.plot(self.inspos[ns][n], 'ro', label=ns)
         plt.legend(loc='upper left')
         plt.title(n + ': ' + sys.argv[1])
 
@@ -108,4 +108,16 @@ class PosType:
 if __name__ == '__main__':
     pos = PosType()
     pos.readbag()
+    print 'yaw std: novatel6 vs novatel 7'
+    print np.std(pos.inspos['novatel6']['yaw']), ' ', np.std(pos.inspos['novatel7']['yaw'])
+    print 'position std: novatel6 vs novatel 7'
+    average6_x = np.mean(pos.inspos['novatel6']['x'])
+    average6_y = np.mean(pos.inspos['novatel6']['y'])
+    average7_x = np.mean(pos.inspos['novatel7']['x'])
+    average7_y = np.mean(pos.inspos['novatel7']['y'])
+    print 'p6 x_std: ', np.std(pos.inspos['novatel6']['x'] - average6_x)
+    print 'p6 y_std: ', np.std(pos.inspos['novatel6']['y'] - average6_y)
+    print 'p7_x_std: ', np.std(pos.inspos['novatel7']['x'] - average7_x)
+    print 'p7_y_std: ', np.std(pos.inspos['novatel7']['y'] - average7_y)
+
     pos.plot()
