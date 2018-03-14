@@ -73,8 +73,18 @@ class XsensAnalysis:
         self.data['novatel'] = copy.deepcopy(self.data['xsens'])
         for i in range(0, len(self.data['xsens']['t']) - 100):
             key = ['x', 'y', 'yaw', 'pitch', 'roll', 't']
+            j = self.local_minimal(i)
             for k in key:
-                self.data['novatel'][k][i] = self.data['raw'][k][self.local_minimal(i)]
+                self.data['novatel'][k][i] = self.data['raw'][k][j]
+
+            novatel_x = self.data['novatel']['x'][i]
+            novatel_y = self.data['novatel']['y'][i]
+            xsens_x = self.data['xsens']['x'][i]
+            xsens_y = self.data['xsens']['y'][i]
+            novatel_t = self.data['novatel']['t'][i]
+            if i < 90000:
+                print novatel_t, novatel_x, xsens_x, novatel_x - xsens_x, 'y: ', novatel_y, xsens_y, novatel_y - xsens_y
+
 
     def local_minimal(self, index):
         limit = 40
