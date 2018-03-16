@@ -40,8 +40,8 @@ class Orientation:
         # self.baseLat = 32.694052  # san diego
         # self.baseLon = -113.958389
 
-        self.baseLat = 32.819380    # AZ
-        self.baseLon = -111.683236
+        self.baseLat = 32.3783405591    # AZ
+        self.baseLon = -111.108504237
 
         print 'baseLat: ', self.baseLat
         print 'baseLon: ', self.baseLon
@@ -78,11 +78,11 @@ class Orientation:
             if i + 2 > len(self.data['lat']):
                 break
             lon = self.data['lon'][i]
-            x, y = self.transform.llh2enu_5(
+            x, y = self.transform.llh2enu_2(
                 lat, lon, 0, self.baseLat, self.baseLon, 0)
             lat2 = self.data['lat'][i + 1]
             lon2 = self.data['lon'][i + 1]
-            x2, y2 = self.transform.llh2enu_5(
+            x2, y2 = self.transform.llh2enu_2(
                 lat2, lon2, 0, self.baseLat, self.baseLon, 0)
 
             gps_yaw = self.RAD2DEG(np.arctan2(x2 - x, y2 - y))
