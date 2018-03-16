@@ -59,7 +59,7 @@ class Orientation:
                 msg.data = 0
             self.data['cal_diff'].append(msg.data)
 
-        first_flag = False  # choose the start point as the base, if True
+        first_flag = True  # choose the start point as the base, if True
         for topic, msg, t in self.bag.read_messages(topics=['/novatel_data/inspvax']):
             if first_flag:
                 self.baseLat = msg.latitude

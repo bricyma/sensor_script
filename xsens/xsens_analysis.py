@@ -25,7 +25,7 @@ class XsensAnalysis:
             self.bag_list[i] = bag_path + self.bag_list[i]
 
         self.diff = []   # gps yaw - inspvax
-        self.data = {'novatel': {}, 'xsens': {}, 'raw': {}}
+        self.data = {'n_raw': {}, 'x_raw': {}, 'novatel': {}, 'xsens': {}}
         self.transform = gps_transformer()
         self.baseLat = 32.339343  # Tucson
         self.baseLon = -111.008097
@@ -36,9 +36,9 @@ class XsensAnalysis:
 
     def readbag(self):
         key = ['lat', 'lon', 'x', 'y', 'yaw', 'pitch', 'roll', 't']
-        for k in key:
-            self.data['raw'][k] = []
-            self.data['xsens'][k] = []
+        for type in self.data:
+            for k in key:
+                self.data['n_raw'][k] = []
 
         first_flag = False  # choose the start point as the base, if True
         for bag in self.bag_list:
@@ -73,29 +73,28 @@ class XsensAnalysis:
     # time sync
     def sync(self):
         self.data['novatel'] = copy.deepcopy(self.data['xsens'])
+        count = 0
         for i in range(0, len(self.data['xsens']['t']) - 100):
             key = ['x', 'y', 'yaw', 'pitch', 'roll', 't']
-            j = self.local_minimal(i)
+            j, min_value = self.local_minimal(i)
+            print min_value
             for k in key:
-                self.data['novatel'][k][i] = self.data['raw'][k][j]
-
-            novatel_x = self.data['novatel']['x'][i]
-            novatel_y = self.data['novatel']['y'][i]
-            xsens_x = self.data['xsens']['x'][i]
-            xsens_y = self.data['xsens']['y'][i]
-            novatel_t = self.data['novatel']['t'][i]
+                if abs(min_value) < 0.05:  # cannot sync
+                    self.data['novatel2'][k][count].append(self.data['raw'][k][j])
+                    self.data['xsens2'][k][count].append(self.data['xsens'][k][j])
+            count += 1
 
     def local_minimal(self, index):
         limit = 40
-        min = 100
+        min_value = 100
         min_index = index
         if index >= limit:
             for i in range(index - limit, index + limit):
-                if abs(self.data['xsens']['t'][index] - self.data['raw']['t'][i]) < min:
-                    min = abs(self.data['xsens']['t']
+                if abs(self.data['xsens']['t'][index] - self.data['raw']['t'][i]) < abs(min_value):
+                    min_value = abs(self.data['xsens']['t']
                               [index] - self.data['raw']['t'][i])
                     min_index = i
-        return min_index
+        return min_index, min_value
 
     def compare(self):
         for brand in self.data:
@@ -117,25 +116,21 @@ class XsensAnalysis:
 
     def plot(self):
         plt.subplot(611)
-        # plt.plot(self.data['xsens']['t'], 'b', label='xsens time')
-        # plt.plot(self.data['novatel']['t'], 'r', label='novatal time')
-        plt.plot(self.data['novatel']['t'] - self.data['xsens']['t'], 'r', label='ros time diff')
-        # plt.plot(self.data['novatel']['pitch'], 'r', label='novatal pitch')
-        # plt.plot(self.data['xsens']['pitch'], 'b', label='xsens pitch')
+        plt.plot(self.data['novatel']['t'] -
+                 self.data['xsens']['t'], 'r', label='ros time diff')
         plt.legend(loc='upper left')
         plt.subplot(612)
         # plot the pitch diff between novatel and xsens
-        plt.plot(self.data['novatel']['pitch'] - self.data['xsens']
-                 ['pitch'], 'r', label='pitch diff between novatel and xsens')
-        # plt.plot(self.data['novatel']['roll'], 'r', label='novatal roll')
-        # plt.plot(self.data['xsens']['roll'], 'b', label='xsens roll')
+        plt.plot(self.data['novatel']['pitch'] -
+                 self.data['xsens']['pitch'], 'r', label='pitch diff')
         plt.legend(loc='upper left')
         plt.subplot(613)
-        plt.plot(self.data['novatel']['yaw'], 'r', label='novatel yaw')
-        plt.plot(self.data['xsens']['yaw'], 'b', label='xsens yaw')
+        plt.plot(self.data['novatel']['roll'] -
+                 self.data['xsens']['roll'], 'r', label='roll diff')
         plt.legend(loc='upper left')
         plt.subplot(614)
-        # plt.plot(self.data['diff'], 'r', label='novatel yaw - xsens yaw')
+        plt.plot(self.data['novatel']['yaw'] -
+                 self.data['xsens']['yaw'], 'r', label='yaw diff')
         plt.legend(loc='upper left')
         plt.subplot(615)
 
@@ -145,8 +140,10 @@ class XsensAnalysis:
                  ['y'], 'bo', label='xsens path')
         plt.legend(loc='upper left')
         plt.subplot(616)
-        plt.plot(self.data['diff_pos'], 'r',
-                 label='pos diff between novatel and xsens')
+        plt.plot(self.data['novatel']['x'] - self.data['xsens']['x'], 'r',
+                 label='East')
+        plt.plot(self.data['novatel']['y'] - self.data['xsens']['y'], 'b',
+                 label='North')
         plt.legend(loc='upper left')
         plt.show()
 
