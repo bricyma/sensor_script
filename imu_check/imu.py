@@ -9,6 +9,7 @@ import rosbag
 import sys
 import numpy as np
 import math
+from llh2enu.llh2enu_gps_transformer import *
 
 EARTH_RADIUS = 6378137.0
 
@@ -27,6 +28,7 @@ class Orientation:
         self.data = {}
         self.baseLat = 0.693143165823  # caofeidian
         self.baseLon = 2.04736661229
+        self.transform = gps_transformer()
         self.baseLat = 39.03775082210  # wuhudao
         self.baseLon = 118.43091220755
 
@@ -38,15 +40,14 @@ class Orientation:
         # self.baseLat = 32.694052  # san diego
         # self.baseLon = -113.958389
 
-        self.baseLat = 32.819380    # AZ
-        self.baseLon = -111.683236
-
         print 'baseLat: ', self.baseLat
         print 'baseLon: ', self.baseLon
 
     def readbag(self):
         self.data['lat'] = []
         self.data['lon'] = []
+        self.data['pitch'] = []
+        self.data['roll'] = []
         self.data['yaw'] = []
         self.data['cal_diff'] = []
         self.data['best_yaw'] = []
@@ -66,6 +67,8 @@ class Orientation:
             self.north_vel.append(msg.north_velocity)
             self.east_vel.append(msg.east_velocity)
             self.data['yaw'].append(msg.azimuth)
+            self.data['roll'].append(msg.roll)
+            self.data['pitch'].append(msg.pitch)
             self.data['lat'].append(msg.latitude)
             self.data['lon'].append(msg.longitude)
         self.bag.close()
@@ -76,12 +79,12 @@ class Orientation:
             if i + 2 > len(self.data['lat']):
                 break
             lon = self.data['lon'][i]
-            x, y = self.latlon2xy(
-                lat, lon)
+            x, y = self.transform.llh2enu_5(
+                lat, lon, 0, self.baseLat, self.baseLon, 0)
             lat2 = self.data['lat'][i + 1]
             lon2 = self.data['lon'][i + 1]
-            x2, y2 = self.latlon2xy(
-                lat2, lon2)
+            x2, y2 = self.transform.llh2enu_5(
+                lat2, lon2, 0, self.baseLat, self.baseLon, 0)
 
             gps_yaw = self.RAD2DEG(np.arctan2(x2 - x, y2 - y))
             if gps_yaw < 0:
@@ -109,31 +112,27 @@ class Orientation:
         yaw_ins = yaw_ins[0:size]
         yaw_gps = yaw_gps[0:size]
         self.diff2 = yaw_gps - yaw_ins
-        self.diff2[self.diff2 > 1.5] = 0
-        self.diff2[self.diff2 < -1.5] = 0
+        self.diff2[self.diff2 > 0.5] = 0
+        self.diff2[self.diff2 < -0.5] = 0
 
         self.diff = yaw2 - yaw1[:-1]
-        self.diff[self.diff > 1.5] = 0
-        self.diff[self.diff < -1.5] = 0
+        self.diff[self.diff > 0.5] = 0
+        self.diff[self.diff < -0.5] = 0
 
         print 'mean diff: ', np.mean(self.diff)
         print 'mean diff2 bestvel: ', np.mean(self.diff2)
 
     def plot(self):
         plt.subplot(411)
-        plt.plot(self.data['yaw'], 'r', label='yaw')
-        plt.plot(self.data['gps_yaw'], 'b', label='orientation from gps')
+        plt.plot(self.data['pitch'], 'r', label='pitch')
         plt.legend(loc='upper left')
         plt.subplot(412)
-        plt.plot(self.diff, 'r', label='gps_yaw-inspvax')
+        plt.plot(self.data['roll'], 'r', label='roll')
         plt.legend(loc='upper left')
         plt.subplot(413)
-        # plt.plot(self.data['cal_diff'], 'b', label='bestvel-inspvax ')
-        # plt.plot(self.data['best_yaw'][::2], 'b', label='bestvel')
-        plt.plot(self.data['yaw'][::5], 'r', label='inspvax yaw')
+        plt.plot(self.data['yaw'], 'rx', label='yaw')
         plt.legend(loc='upper left')
         plt.subplot(414)
-        plt.plot(self.diff2, 'r', label='bestvel-inspvax')
         plt.legend(loc='upper left')
         plt.show()
 

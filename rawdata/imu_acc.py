@@ -32,15 +32,18 @@ veh_acc_x = []
 veh_acc_y = []
 veh_acc_z = []
 
+veh_vel_xx = []
 veh_vel = []
 veh_vel_acc = []
 
 imu = []
 ins = []
 veh = []
-gyro_scale_factor = 0.1/(3600.0*256.0)
-acc_scale_factor = 0.05/(2**15)
-imu_rate = 200
+gyro_scale_factor = 2**-21
+# gyro_scale_factor = 0.1/(3600.0*256.0)
+acc_scale_factor = 2**-22
+# acc_scale_factor = 0.05/(2**15)
+imu_rate = 125
 
 
 def read_data():
@@ -87,9 +90,9 @@ def read_data():
 
 def plot():
     for i in range(0, 3):
-        plt.plot(veh_vel_acc, 'g', label='veh acc from twist')
+        # plt.plot(veh_vel_acc[::2], 'r', label='veh acc from twist')
         plt.plot(ins[i], 'b', label='corrimudata')
-        # plt.plot(imu[i], 'g', label='rawimu')
+        plt.plot(imu[i], 'g', label='rawimu')
         if i == 0:
             plt.plot(veh[i], 'r', label='negative vehicle imu')
             plt.title("Linear acceleration on X-axle between CORRIMUDATA and RAWIMU")
