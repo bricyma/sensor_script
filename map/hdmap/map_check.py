@@ -2,27 +2,34 @@
 import matplotlib.pyplot as plt
 import numpy as np
 from tsmap import TSMap, Lane, Point3d, Bound, latlon2xy
+from llh2enu.llh2enu_gps_transformer import *
+map_file = "I-10_Tucson2Phoenix_20180316.hdmap"
 
-map_file = "0315-PT.hdmap"
-
-data = {'test': {'x': [], 'y': [], 'yaw': []},
+# yaw is derived from x,y path
+# azimuth is from azimuth in INSPVAX
+data = {'test': {'x': [], 'y': [], 'azimuth': [], 'yaw': []},
         'map': {'x': [], 'y': [], 'yaw': []}}
+
+baseLat = 32.75707
+baseLon = -111.55757
 with open(map_file, 'rb') as f:
     submap = f.read()
 map = TSMap(submap)
-
+trans = gps_transformer()
 
 def parse():
     count = 0
-    with open('gps_2018-02-28-18-36-13.txt') as f:
+    with open('gps2.txt') as f:
         for line in f:
             try:
                 count += 1
                 a = line.split(' ')
-                x, y = latlon2xy(float(a[0]), float(a[1]))
+                # x, y = latlon2xy(float(a[0]), float(a[1]))
+                x, y = trans.llh2enu_1(float(a[0]), float(a[1]), 0, baseLat, baseLon, 0)
+
                 p = Point3d(x, y)
                 ref_p = map.get_ref_pt(p)
-                data['test']['yaw'].append(float(a[2]))
+                data['test']['azimuth'].append(float(a[2]))
                 data['test']['x'].append(float(a[0]))
                 data['test']['y'].append(float(a[1]))
                 data['map']['x'].append(ref_p.x)
@@ -35,19 +42,25 @@ def plot():
     for d in data:
         for k in data[d]:
             data[d][k] = np.array(data[d][k])
-    x2 = data['map']['x'][1:]
-    x = data['map']['x'][:-1]
-    y2 = data['map']['y'][1:]
-    y = data['map']['y'][:-1]
-    data['map']['yaw'] = np.arctan2(x2 - x, y2 - y) * 180 / np.pi
-    for i in range(0, len(data['map']['yaw'])):
-        if data['map']['yaw'][i] < 0:
-            data['map']['yaw'][i] += 360
 
-    data['map']['yaw'] = np.append(data['map']['yaw'], data['map']['yaw'][-1])
+    for k in data:
+        x2 = data[k]['x'][1:]
+        x = data[k]['x'][:-1]
+        y2 = data[k]['y'][1:]
+        y = data[k]['y'][:-1]
+        if k == 'test':
+            data[k]['yaw'] = np.arctan2(y2 - y, x2 - x) * 180 / np.pi
+        else:
+            data[k]['yaw'] = np.arctan2(x2 - x, y2 - y) * 180 / np.pi
+        for i in range(0, len(data[k]['yaw'])):
+            if data[k]['yaw'][i] < 0:
+                data[k]['yaw'][i] += 360
+        data[k]['yaw'] = np.append(data[k]['yaw'], data[k]['yaw'][-1])
+
     plt.subplot(311)
-    plt.plot(data['map']['yaw'], 'r', label='map')
-    plt.plot(data['test']['yaw'], 'b', label='test')
+    plt.plot(data['map']['yaw'], 'r', label='map_gps')
+    plt.plot(data['test']['yaw'], 'b', label='test_gps')
+    plt.plot(data['test']['azimuth'], 'g', label='test_azimuth')
     plt.legend(loc='upper left')
 
     plt.subplot(312)
