@@ -20,7 +20,7 @@ class XsensAnalysis:
     def __init__(self):
         self.bag_list = []
         self.bag_list.append(sys.argv[1])
-        bag_path = '../../rosbag/xsens_analysis/'
+        bag_path = '../../rosbag/'
         for i in range(0, len(self.bag_list)):
             self.bag_list[i] = bag_path + self.bag_list[i]
 
@@ -174,6 +174,10 @@ class XsensAnalysis:
             for key in self.data[brand]:
                 self.data[brand][key] = np.array(self.data[brand][key])
 
+        self.data['xsens'] = {}
+        self.data['xsens'] = copy.deepcopy(self.data['xsens2'])
+
+
     def local_minimal(self, index):
         limit = 80
         min_value = 100
@@ -186,6 +190,14 @@ class XsensAnalysis:
                     min_index = i
         return min_index, min_value
 
+    def analyze(self):
+        for k in self.data['novatel']:
+            delta = self.data['novatel'][k] - self.data['xsens'][k]
+            if k == 'yaw' or 'roll' or 'pitch':
+                delta -= np.mean(delta)
+            print 'xsens ' + k + ' RMS: ', np.sqrt(np.mean(delta**2))
+    
+
     def plot(self):
         # enlarge the font size of figure
         font = {'family': 'normal',
@@ -193,8 +205,6 @@ class XsensAnalysis:
                 'size': 22}
 
         matplotlib.rc('font', **font)
-        self.data['xsens'] = {}
-        self.data['xsens'] = copy.deepcopy(self.data['xsens2'])
         # time
         plt.subplot(311)
         # delta_t = self.data['novatel']['t_ros'] - self.data['xsens']['t_ros']
@@ -320,6 +330,7 @@ class XsensAnalysis:
     def run(self):
         self.readbag()
         self.sync()
+        self.analyze()
         self.plot()
 
 
