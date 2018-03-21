@@ -2,6 +2,7 @@
 # date: 2018/03/20
 # compare the GPS/IMU performane between Novatel propak6 and Xsens MTI-710
 
+import matplotlib
 import matplotlib.pyplot as plt
 import math as m
 import rosbag
@@ -24,7 +25,8 @@ class XsensAnalysis:
             self.bag_list[i] = bag_path + self.bag_list[i]
 
         self.corr = []   # time correction value for ros time
-        self.data = {'raw': {}, 'xsens': {}, 'novatel': {}, 'xsens2': {}}  # xsens2 is the updated xsens data with time sync
+        # xsens2 is the updated xsens data with time sync
+        self.data = {'raw': {}, 'xsens': {}, 'novatel': {}, 'xsens2': {}}
         self.transform = gps_transformer()
         self.baseLat = 32.339343  # Tucson
         self.baseLon = -111.008097
@@ -34,7 +36,8 @@ class XsensAnalysis:
         return x * (180 / np.pi)
 
     def readbag(self):
-        key = ['lat', 'lon', 'x', 'y', 'yaw', 'pitch', 'roll', 't_gps', 't_ros', 'vel_e', 'vel_n', 'vel']
+        key = ['lat', 'lon', 'x', 'y', 'yaw', 'pitch',
+               'roll', 't_gps', 't_ros', 'vel_e', 'vel_n', 'vel']
         for t in self.data:
             for k in key:
                 self.data[t][k] = []
@@ -48,15 +51,15 @@ class XsensAnalysis:
                     self.baseLon = msg.longitude
                     first_flag = False
                 novatel_time = 315964800 + msg.header.gps_week * 7 * 24 * 60 * 60 \
-                + float(msg.header.gps_week_seconds) / \
-                1000 - 18  # GPS time to epoch second
+                    + float(msg.header.gps_week_seconds) / \
+                    1000 - 18  # GPS time to epoch second
                 pc_time = float(str(msg.header2.stamp.secs)) \
-                + float(str(msg.header2.stamp.nsecs)) * \
-                1e-9  # epoch second
-                
+                    + float(str(msg.header2.stamp.nsecs)) * \
+                    1e-9  # epoch second
+
                 self.data['raw']['t_gps'].append(novatel_time)
                 # self.data['raw']['t_ros'].append(pc_time)
-                # choose the right data through the visualization plot of the difference 
+                # choose the right data through the visualization plot of the difference
                 # between pc_time and novatel_time
                 self.data['raw']['t_ros'].append(pc_time)
                 # print novatel_time - pc_time
@@ -70,7 +73,8 @@ class XsensAnalysis:
 
                 self.data['raw']['lat'].append(msg.latitude)
                 self.data['raw']['lon'].append(msg.longitude)
-                self.data['raw']['vel'].append(np.sqrt(msg.east_velocity ** 2 + msg.north_velocity ** 2))
+                self.data['raw']['vel'].append(
+                    np.sqrt(msg.east_velocity ** 2 + msg.north_velocity ** 2))
 
             for topic, msg, t in bag.read_messages(topics=['/xsens_driver/imupos']):
                 self.data['xsens']['t_ros'].append(
@@ -84,8 +88,9 @@ class XsensAnalysis:
                 self.data['xsens']['y'].append(y)
                 self.data['xsens']['vel_e'].append(msg.vx)
                 self.data['xsens']['vel_n'].append(msg.vy)
-                self.data['xsens']['vel'].append(np.sqrt(msg.vx ** 2 + msg.vy ** 2))
- 
+                self.data['xsens']['vel'].append(
+                    np.sqrt(msg.vx ** 2 + msg.vy ** 2))
+
             bag.close()
         self.time_correction()
 
@@ -104,8 +109,8 @@ class XsensAnalysis:
         plt.show()
         print 'aa'
         for i in range(0, len(self.data['raw']['t_ros'])):
-            self.data['raw']['t_ros'][i] = self.data['raw']['t_gps'][i] - filtered[i] #self.corr[i]
-
+            self.data['raw']['t_ros'][i] = self.data['raw']['t_gps'][i] - \
+                filtered[i]  # self.corr[i]
 
     def savitzky_golay(self, y, window_size, order, deriv=0, rate=1):
         from math import factorial
@@ -118,18 +123,20 @@ class XsensAnalysis:
         if window_size % 2 != 1 or window_size < 1:
             raise TypeError("window_size size must be a positive odd number")
         if window_size < order + 2:
-            raise TypeError("window_size is too small for the polynomials order")
-        order_range = range(order+1)
-        half_window = (window_size -1) // 2
+            raise TypeError(
+                "window_size is too small for the polynomials order")
+        order_range = range(order + 1)
+        half_window = (window_size - 1) // 2
         # precompute coefficients
-        b = np.mat([[k**i for i in order_range] for k in range(-half_window, half_window+1)])
+        b = np.mat([[k**i for i in order_range]
+                    for k in range(-half_window, half_window + 1)])
         m = np.linalg.pinv(b).A[deriv] * rate**deriv * factorial(deriv)
         # pad the signal at the extremes with
         # values taken from the signal itself
-        firstvals = y[0] - np.abs( y[1:half_window+1][::-1] - y[0] )
-        lastvals = y[-1] + np.abs(y[-half_window-1:-1][::-1] - y[-1])
+        firstvals = y[0] - np.abs(y[1:half_window + 1][::-1] - y[0])
+        lastvals = y[-1] + np.abs(y[-half_window - 1:-1][::-1] - y[-1])
         y = np.concatenate((firstvals, y, lastvals))
-        return np.convolve( m[::-1], y, mode='valid')
+        return np.convolve(m[::-1], y, mode='valid')
 
     def filter(self, n):
         window = 50
@@ -141,10 +148,11 @@ class XsensAnalysis:
         if n > len(self.data['raw']['t_ros']) - window:
             upper = 0
         for i in range(lower, upper):
-            diff = self.data['raw']['t_gps'][n+i] - self.data['raw']['t_ros'][n+i]
+            diff = self.data['raw']['t_gps'][n + i] - \
+                self.data['raw']['t_ros'][n + i]
             dt_sum += diff
         average = dt_sum
-        return dt_sum / (upper - lower)     
+        return dt_sum / (upper - lower)
 
     # time sync
     # for each novatel time stamp, we will have one xsens time stamp
@@ -166,7 +174,6 @@ class XsensAnalysis:
             for key in self.data[brand]:
                 self.data[brand][key] = np.array(self.data[brand][key])
 
-
     def local_minimal(self, index):
         limit = 80
         min_value = 100
@@ -174,32 +181,39 @@ class XsensAnalysis:
         if index >= limit:
             for i in range(index - limit, index + limit):
                 if abs(self.data['novatel']['t_ros'][index] - self.data['xsens']['t_ros'][i]) < abs(min_value):
-                    min_value = abs(self.data['novatel']['t_ros'][index] - self.data['xsens']['t_ros'][i])
+                    min_value = abs(
+                        self.data['novatel']['t_ros'][index] - self.data['xsens']['t_ros'][i])
                     min_index = i
         return min_index, min_value
 
-
     def plot(self):
+        # enlarge the font size of figure
+        font = {'family': 'normal',
+                'weight': 'bold',
+                'size': 22}
+
+        matplotlib.rc('font', **font)
         self.data['xsens'] = {}
         self.data['xsens'] = copy.deepcopy(self.data['xsens2'])
-        # time  
+        # time
         plt.subplot(311)
         # delta_t = self.data['novatel']['t_ros'] - self.data['xsens']['t_ros']
         # plt.plot(self.data['novatel']['t_ros'], 'r', label = 'novatel t')
-        plt.plot(self.data['novatel']['t_ros'][1:] - self.data['novatel']['t_ros'][:-1], 'g', label = 'novatel delta t')
+        plt.plot(self.data['novatel']['t_ros'][1:] - self.data['novatel']
+                 ['t_ros'][:-1], 'g', label='novatel delta t')
         # plt.plot(self.data['xsens']['t_ros'], 'b', label = 'xsens t')
         plt.legend(loc='upper left')
 
         plt.subplot(312)
         delta_t = self.data['raw']['t_gps'] - self.data['raw']['t_ros']
-        plt.plot(delta_t, 'r', label = 'raw: t_gps - t_ros')
+        plt.plot(delta_t, 'r', label='raw: t_gps - t_ros')
         plt.legend(loc='upper left')
         plt.xlabel('Stamp Sequence')
 
-        
         plt.subplot(313)
-        delta_t = self.data['raw']['t_gps'][:-1] - self.data['raw']['t_gps'][1:]
-        plt.plot(delta_t, 'r', label = 'raw t_gps delta')
+        delta_t = self.data['raw']['t_gps'][:-1] - \
+            self.data['raw']['t_gps'][1:]
+        plt.plot(delta_t, 'r', label='raw t_gps delta')
         plt.legend(loc='upper left')
         plt.xlabel('Stamp Sequence')
 
@@ -207,8 +221,8 @@ class XsensAnalysis:
 
         # orientation
         plt.subplot(611)
-        plt.plot(self.data['raw']['pitch'], 'r', label = 'novatel pitch')
-        plt.plot(self.data['xsens']['pitch'], 'b', label = 'xsens pitch')
+        plt.plot(self.data['raw']['pitch'], 'r', linewidth=3.0, label='novatel pitch')
+        plt.plot(self.data['xsens']['pitch'], 'b', linewidth=3.0, label='xsens pitch')
         plt.legend(loc='upper left')
         plt.xlabel('Stamp Sequence')
         plt.ylabel('Pitch (deg)')
@@ -222,8 +236,8 @@ class XsensAnalysis:
         # plt.title('Xsens Pitch Accuracy')
 
         plt.subplot(613)
-        plt.plot(self.data['novatel']['roll'], 'r', label = 'novatel roll')
-        plt.plot(self.data['xsens']['roll'], 'b', label = 'xsens roll')
+        plt.plot(self.data['novatel']['roll'], 'r', linewidth=3.0, label='novatel roll')
+        plt.plot(self.data['xsens']['roll'], 'b', linewidth=3.0, label='xsens roll')
         plt.legend(loc='upper left')
         plt.xlabel('Stamp Sequence')
         plt.ylabel('Roll (deg)')
@@ -237,10 +251,10 @@ class XsensAnalysis:
         # plt.title('Xsens Roll Accuracy')
 
         plt.subplot(615)
-        plt.plot(self.data['raw']['yaw'], 'r', label = 'novatel yaw')
-        plt.plot(self.data['xsens']['yaw'], 'b', label = 'xsens yaw')
+        plt.plot(self.data['raw']['yaw'], 'r', linewidth=3.0, label='novatel yaw')
+        plt.plot(self.data['xsens']['yaw'], 'b', linewidth=3.0, label='xsens yaw')
         plt.legend(loc='upper left')
-        plt.xlabel('Stamp Sequence')        
+        plt.xlabel('Stamp Sequence')
         plt.ylabel('Yaw (deg)')
         # plt.title('Xsens Yaw')
 
@@ -254,15 +268,16 @@ class XsensAnalysis:
 
         plt.show()
 
-        plt.plot(self.data['novatel']['x'], self.data['novatel']['y'], 'r', linewidth=3.0, label = 'novatel trajectory')
-        plt.plot(self.data['xsens']['x'], self.data['xsens']['y'], 'b', linewidth=3.0, label = 'xsens trajectory')
+        plt.plot(self.data['novatel']['x'], self.data['novatel']
+                 ['y'], 'r', linewidth=3.0, label='novatel trajectory')
+        plt.plot(self.data['xsens']['x'], self.data['xsens']
+                 ['y'], 'b', linewidth=3.0, label='xsens trajectory')
         plt.xlabel('East (m)')
         plt.ylabel('North (m)')
         plt.title('Trajectory')
         plt.legend(loc='upper left')
 
         plt.show()
-
 
         # position
         plt.subplot(411)
@@ -271,7 +286,6 @@ class XsensAnalysis:
         plt.title('Xsens Position accuracy on East direction ')
         plt.ylabel('East (m)')
         plt.xlabel('Stamp Sequence')
-
 
         plt.subplot(412)
         delta = self.data['novatel']['y'] - self.data['xsens']['y']
@@ -282,13 +296,12 @@ class XsensAnalysis:
         plt.title('Xsens Position accuracy on North direction ')
 
         plt.subplot(413)
-        plt.plot(self.data['novatel']['vel'], 'r', label = 'novatel velocity')
-        plt.plot(self.data['xsens']['vel'], 'b', label = 'xsens velocity')
+        plt.plot(self.data['novatel']['vel'], 'r', linewidth=3.0, label='novatel velocity')
+        plt.plot(self.data['xsens']['vel'], 'b', linewidth=3.0, label='xsens velocity')
         plt.legend(loc='upper left')
         plt.title('Xsens Velocity')
         plt.ylabel('Velocity (m/s)')
         plt.xlabel('Stamp Sequence')
-
 
         plt.subplot(414)
         delta = self.data['novatel']['vel'] - self.data['xsens']['vel']
@@ -300,12 +313,9 @@ class XsensAnalysis:
 
         plt.show()
 
-
     def plot_content(self, delta, _label):
-        plt.plot(delta, 'r', label = _label)
+        plt.plot(delta, 'r', linewidth=3.0, label=_label)
         plt.legend(loc='upper left')
-
-
 
     def run(self):
         self.readbag()
