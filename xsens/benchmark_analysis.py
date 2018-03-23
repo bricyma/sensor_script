@@ -228,6 +228,13 @@ class XsensAnalysis:
         plt.xlabel('Stamp Sequence')
 
         plt.show()
+        plt.plot(self.data['raw']['yaw'], 'r. ', linewidth=3.0, label='novatel yaw')
+        plt.plot(self.data['xsens']['yaw'], 'b. ', linewidth=3.0, label='xsens yaw')
+        plt.legend(loc='upper left')
+        plt.xlabel('Stamp Sequence')
+        plt.ylabel('Yaw (deg)')
+        plt.show()
+
 
         # orientation
         plt.subplot(611)
@@ -261,8 +268,8 @@ class XsensAnalysis:
         # plt.title('Xsens Roll Accuracy')
 
         plt.subplot(615)
-        plt.plot(self.data['raw']['yaw'], 'r', linewidth=3.0, label='novatel yaw')
-        plt.plot(self.data['xsens']['yaw'], 'b', linewidth=3.0, label='xsens yaw')
+        plt.plot(self.data['raw']['yaw'], 'r. ', linewidth=3.0, label='novatel yaw')
+        plt.plot(self.data['xsens']['yaw'], 'b. ', linewidth=3.0, label='xsens yaw')
         plt.legend(loc='upper left')
         plt.xlabel('Stamp Sequence')
         plt.ylabel('Yaw (deg)')
@@ -279,9 +286,9 @@ class XsensAnalysis:
         plt.show()
 
         plt.plot(self.data['novatel']['x'], self.data['novatel']
-                 ['y'], 'r', linewidth=3.0, label='novatel trajectory')
+                 ['y'], 'r.', linewidth=3.0, label='novatel trajectory')
         plt.plot(self.data['xsens']['x'], self.data['xsens']
-                 ['y'], 'b', linewidth=3.0, label='xsens trajectory')
+                 ['y'], 'b.', linewidth=3.0, label='xsens trajectory')
         plt.xlabel('East (m)')
         plt.ylabel('North (m)')
         plt.title('Trajectory')
@@ -292,14 +299,14 @@ class XsensAnalysis:
         # position
         plt.subplot(411)
         delta = self.data['novatel']['x'] - self.data['xsens']['x']
-        self.plot_content(delta, 'x accuracy')
+        self.plot_content(delta, 'East accuracy')
         plt.title('Xsens Position accuracy on East direction ')
         plt.ylabel('East (m)')
         plt.xlabel('Stamp Sequence')
 
         plt.subplot(412)
         delta = self.data['novatel']['y'] - self.data['xsens']['y']
-        self.plot_content(delta, 'y accuracy')
+        self.plot_content(delta, 'North accuracy')        
         plt.ylabel('North (m)')
         plt.xlabel('Stamp Sequence')
 
