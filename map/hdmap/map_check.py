@@ -80,10 +80,7 @@ def plot():
         x = data[k]['x'][:-1]
         y2 = data[k]['y'][1:]
         y = data[k]['y'][:-1]
-        if k == 'test':
-            data[k]['yaw'] = RAD2DEG(np.arctan2(x2 - x, y2 - y))
-        else:
-            data[k]['yaw'] = RAD2DEG(np.arctan2(x2 - x, y2 - y))
+        data[k]['yaw'] = RAD2DEG(np.arctan2(x2 - x, y2 - y))
         for i in range(0, len(data[k]['yaw'])):
             if data[k]['yaw'][i] < 0:
                 data[k]['yaw'][i] += 360
