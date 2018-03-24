@@ -5,8 +5,8 @@ from tsmap import TSMap, Lane, Point3d, Bound, latlon2xy
 from llh2enu.llh2enu_gps_transformer import *
 import sys
 
-map_file = "I-10_Phoenix2Tucson_20180315.hdmap"
-# map_file = "I-10_Tucson2Phoenix_20180316.hdmap"
+# map_file = "I-10_Phoenix2Tucson_20180315.hdmap"
+map_file = "I-10_Tucson2Phoenix_20180316.hdmap"
 gps_file = sys.argv[1]
 # yaw is derived from x,y path
 # azimuth is from azimuth in INSPVAX
@@ -96,11 +96,29 @@ def plot():
     plt.legend(loc='upper left')
 
     plt.subplot(512)
+    diff_ins_gps = data['test']['yaw'] - data['test']['azimuth']
+
+    window = 10000
+    diff_w = []
+    sum = 0
+    for i in range (0, len(diff_ins_gps)):
+        if i < window:
+            sum += diff_ins_gps[i]
+            diff_w.append(diff_ins_gps[i])
+        else:
+            sum += diff_ins_gps[i]
+            sum -= diff_ins_gps[i-window]
+            ave = sum/window
+            diff_w.append(ave)
+    data['test']['azimuth'] += np.array(diff_w)
+    # plt.plot(diff_w, 'b.', label='average map-azimuth')
+
     diff = data['map']['yaw'] - data['test']['azimuth']
     diff[abs(diff) > 2] = 0
-    # filter, smooth
-    diff = savitzky_golay(diff, 2001, 3)
 
+    # filter, smooth
+    # diff = savitzky_golay(diff, 2001, 3)
+    
     plt.plot(diff, 'r.', label='map - test_azimuth')
     plt.legend(loc='upper left')
 
@@ -117,8 +135,25 @@ def plot():
     diff = data['test']['yaw'] - data['test']['azimuth']
     diff[abs(diff) > 2] = 0
     # filter, smooth
-    diff = savitzky_golay(diff, 2001, 3)
+    # diff = savitzky_golay(diff, 2001, 3)
+
+    window = 10000
+    diff_w = []
+    sum = 0
+    for i in range (0, len(diff)):
+        if i < window:
+            sum += diff[i]
+            diff_w.append(diff[i])
+        else:
+            sum += diff[i]
+            sum -= diff[i-window]
+            ave = sum/window
+            diff_w.append(ave)
+
+
     plt.plot(diff, 'r.', label='test_gps - test_azimuth')
+    plt.plot(diff_w, 'g.', label='average inspvax-gps_yaw')
+
     plt.legend(loc='upper left')
 
     plt.subplot(515)

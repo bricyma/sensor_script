@@ -9,7 +9,7 @@ import glob
 
 class PosType:
     def __init__(self):
-        bag_path = "/mnt/truenas/scratch/data_collection/2018-03-19/2018-03-19-16-37-04/"
+        bag_path = "/mnt/truenas/scratch/data_collection/2018-02-28/2018-02-28-18-36-13/"
         self.file_name = 'gps_' + bag_path.split('/')[-2] + '.txt'
         self.bagname = glob.glob(bag_path + "*.bag")
         print 'bagname: ', self.bagname
