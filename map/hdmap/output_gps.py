@@ -9,9 +9,9 @@ import glob
 
 class PosType:
     def __init__(self):
-        bag_path = "/mnt/truenas/scratch/data_collection/2018-03-24/2018-03-24-17-52-22/"
+        bag_path = "/home/bricy/workspace/rosbag/hdmap/2018-03-24-17-52-22/"
         self.file_name = 'gps_' + bag_path.split('/')[-2] + '.txt'
-        self.bagname = glob.glob(bag_path + "*.bag")
+        self.bagname = sorted(glob.glob(bag_path + "*.bag"))
         print 'bagname: ', self.bagname
         self.bag = []
         self.bestvel = []  # azimuth from topic /novatel_data/bestvel
