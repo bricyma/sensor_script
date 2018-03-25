@@ -9,7 +9,7 @@ import glob
 
 class PosType:
     def __init__(self):
-        bag_path = "/mnt/truenas/scratch/data_collection/2018-02-28/2018-02-28-18-36-13/"
+        bag_path = "/mnt/truenas/scratch/data_collection/2018-03-24/2018-03-24-17-52-22/"
         self.file_name = 'gps_' + bag_path.split('/')[-2] + '.txt'
         self.bagname = glob.glob(bag_path + "*.bag")
         print 'bagname: ', self.bagname
@@ -23,6 +23,9 @@ class PosType:
         for bag in self.bag:
             for topic, msg, t in bag.read_messages(topics=['/novatel_data/bestvel']):
                 self.bestvel.append(msg.trk_gnd)
+
+            # for topic, msg, t in bag.read_messages(topics=['/localization/pose']):
+            #     self.
 
         with open(self.file_name, 'w') as the_file:
             count = 0

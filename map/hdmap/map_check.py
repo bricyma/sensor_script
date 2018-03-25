@@ -8,6 +8,8 @@ import sys
 # map_file = "I-10_Phoenix2Tucson_20180315.hdmap"
 map_file = "I-10_Tucson2Phoenix_20180316.hdmap"
 gps_file = sys.argv[1]
+filter_enable = False
+
 # yaw is derived from x,y path
 # azimuth is from azimuth in INSPVAX
 data = {'test': {'x': [], 'y': [], 'azimuth': [], 'yaw': [], 'bestvel': []},
@@ -107,7 +109,7 @@ def plot():
             sum -= diff_ins_gps[i-window]
             ave = sum/window
             diff_w.append(ave)
-    data['test']['azimuth'] += np.array(diff_w)
+    # data['test']['azimuth'] += np.array(diff_w)
     # plt.plot(diff_w, 'b.', label='average map-azimuth')
 
     diff = data['map']['yaw'] - data['test']['azimuth']
@@ -115,7 +117,7 @@ def plot():
 
     # filter, smooth
     # diff = savitzky_golay(diff, 2001, 3)
-    
+
     plt.plot(diff, 'r.', label='map - test_azimuth')
     plt.legend(loc='upper left')
 
@@ -123,7 +125,8 @@ def plot():
     diff = data['map']['yaw'] - data['test']['yaw']
     diff[abs(diff) > 2] = 0
     # filter, smooth
-    diff = savitzky_golay(diff, 2001, 3)
+    if filter_enable:
+        diff = savitzky_golay(diff, 2001, 3)
 
     plt.plot(diff, 'r.', label='map - test_gps')
     plt.legend(loc='upper left')
@@ -149,15 +152,17 @@ def plot():
 
 
     plt.plot(diff, 'r.', label='test_gps - test_azimuth')
-    plt.plot(diff_w, 'g.', label='average inspvax-gps_yaw')
+    # plt.plot(diff_w, 'g.', label='average inspvax-gps_yaw')
 
     plt.legend(loc='upper left')
 
     plt.subplot(515)
     diff = data['test']['bestvel'] - data['test']['azimuth']
     diff[abs(diff) > 2] = 0
+
     # filter, smooth
-    diff = savitzky_golay(diff, 2001, 3)
+    if filter_enable:
+        diff = savitzky_golay(diff, 2001, 3)
     plt.plot(diff, 'r.', label='bestvel - azimuth')
     plt.legend(loc='upper left')
 

@@ -8,8 +8,14 @@ import sys
 baseLat1 = 32.75707
 baseLon1 = -111.55757
 
-baseLat2 = 32.262478
-baseLon2 = -111.027631
+# baseLat2 = 32.262478  tucson
+# baseLon2 = -111.027631
+
+# baseLat2 = 32.469261
+# baseLon2 = -111.223495
+
+baseLat2 = 33.285581 # phoneix
+baseLon2 = -111.968268
 gps_file = sys.argv[1]
 
 # yaw is derived from x,y path
@@ -26,9 +32,9 @@ def RAD2DEG(rad):
 
 def parse():
     count = 0
-    x_0, y_0 = transform.llh2enu_5(
+    x_0, y_0 = transform.llh2enu_1(
         baseLat1, baseLon1, 0, baseLat1, baseLon1, 0)
-    x2_0, y2_0 = transform.llh2enu_5(
+    x2_0, y2_0 = transform.llh2enu_1(
         baseLat2, baseLon2, 0, baseLat2, baseLon2, 0)
 
     x_first, y_first = 0, 0
@@ -40,9 +46,9 @@ def parse():
                 count += 1
                 a = line.split(' ')
                 lat, lng = float(a[0]), float(a[1])
-                x, y = transform.llh2enu_5(
+                x, y = transform.llh2enu_2(
                     lat, lng, 0, baseLat1, baseLon1, 0)
-                x2, y2 = transform.llh2enu_5(
+                x2, y2 = transform.llh2enu_2(
                     lat, lng, 0, baseLat2, baseLon2, 0)
                 
                 if first_flag:
