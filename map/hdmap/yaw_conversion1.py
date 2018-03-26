@@ -14,16 +14,15 @@ class YawConversion:
     def inspvax_wrap(self, lat, lon, azimuth):
         x, y, z = self.base_gnss_trans.latlon2xy(np.array([self.base_lat, self.base_lon, 0]))
         self.vehicle_gnss_trans.set_base(lat, lon)
-        yaw = self.yaw_conversion(azimuth)
-        return yaw
+        delta, yaw = self.yaw_conversion(azimuth)
+        return delta, yaw
 
     def yaw_conversion(self, azimuth):
         pts_enu = self.vehicle_gnss_trans.latlon2xy(self.base_North_GPS.copy())
         pts_enu = (pts_enu - pts_enu[0])[1]
         angle = np.arctan2(pts_enu[0], pts_enu[1])
         angle = np.rad2deg(angle)
-        # print 'delta: ', angle
-        return azimuth - angle
+        return angle, azimuth - angle
 
 
 if __name__ == '__main__':

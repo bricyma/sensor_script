@@ -16,12 +16,12 @@ filter_enable = False
 # azimuth is from azimuth in INSPVAX
 data = {'test': {'x': [], 'y': [], 'azimuth': [], 'yaw': [], 'bestvel': [], 'yaw2': []},
         'map': {'x': [], 'y': [], 'yaw': []}}
-
+delta_pos = {'x': [], 'y': []}
 baseLat = 32.75707
 baseLon = -111.55757
 trans = gps_transformer()
-yaw_conv = YawConversion()
-
+yaw_conver = YawConversion()
+loc_correction = []
 with open(map_file, 'rb') as f:
     submap = f.read()
 map = TSMap(submap)
@@ -42,9 +42,13 @@ def parse():
                 data['test']['bestvel'].append(float(a[3]))
                 data['test']['x'].append(x)
                 data['test']['y'].append(y)
-                data['test']['yaw2'].append(yaw_conv.inspvax_wrap(lat, lon, azimuth))
+                corr, azi = yaw_conver.inspvax_wrap(lat, lon, azimuth)
+                data['test']['yaw2'].append(azi)
+                loc_correction.append(-corr)
                 data['map']['x'].append(ref_p.x)
                 data['map']['y'].append(ref_p.y)
+                delta_pos['x'].append(ref_p.x - x)
+                delta_pos['y'].append(ref_p.y - y)
                 
             except:
                 pass
@@ -59,14 +63,33 @@ def parse():
         y2 = data[k]['y'][1:]
         y = data[k]['y'][:-1]
         data[k]['yaw'] = RAD2DEG(np.arctan2(x2 - x, y2 - y))
+        print 'aaa', k,  data[k]['yaw']
         for i in range(0, len(data[k]['yaw'])):
             if data[k]['yaw'][i] < 0:
                 data[k]['yaw'][i] += 360
+        
         data[k]['yaw'] = np.append(data[k]['yaw'], data[k]['yaw'][-1])
-
+    print data['map']['yaw'][222:55555]
 
 def RAD2DEG(rad):
     return rad * 180 / np.pi
+
+def yaw_conv(d):
+    window = 10000
+    diff_w = []
+    sum = 0
+    for i in range (0, len(d)):
+        if d[i] > 2:
+            continue
+        if i < window:
+            sum += d[i]
+            diff_w.append(d[i])
+        else:
+            sum += d[i]
+            sum -= d[i-window]
+            ave = sum/window
+            diff_w.append(ave)
+    return np.array(diff_w)
 
 # smooth the diff data
 def savitzky_golay(y, window_size, order, deriv=0, rate=1):
@@ -101,70 +124,60 @@ def plot():
     plt.legend(loc='upper left')
 
     plt.subplot(512)
-    diff_ins_gps = data['test']['yaw'] - data['test']['azimuth']
-    window = 10000
-    diff_w = []
-    sum = 0
-    for i in range (0, len(diff_ins_gps)):
-        if i < window:
-            sum += diff_ins_gps[i]
-            diff_w.append(diff_ins_gps[i])
-        else:
-            sum += diff_ins_gps[i]
-            sum -= diff_ins_gps[i-window]
-            ave = sum/window
-            diff_w.append(ave)
-    # data['test']['azimuth'] += np.array(diff_w)
-    # plt.plot(diff_w, 'b.', label='average map-azimuth')
-
+    
     diff = data['map']['yaw'] - data['test']['azimuth']
     diff2 = data['map']['yaw'] - data['test']['yaw2'] 
     diff[abs(diff) > 2] = 0
     diff2[abs(diff2) > 2] = 0
-    print 'sbsssssss'
-    # filter, smooth
-    # diff = savitzky_golay(diff, 2001, 3)
-    # add chenzhe's yaw conversion 
-    plt.plot(diff, 'r.', label='map - test_azimuth')
-    plt.plot(diff2, 'b.', label='map - test_azimuth2')
+    
+    # original
+    plt.plot(diff, 'r', label='map - test_azimuth') 
+    # localization yaw offset correction
+    plt.plot(diff2, 'b', label='map - test_azimuth2')
     plt.legend(loc='upper left')
-
+    
     plt.subplot(513)
-    diff = data['map']['yaw'] - data['test']['yaw']
-    diff[abs(diff) > 2] = 0
-    # filter, smooth
-    if filter_enable:
-        diff = savitzky_golay(diff, 2001, 3)
-
-    plt.plot(diff, 'r.', label='map - test_gps')
+    diff = data['test']['yaw'] - data['test']['azimuth']
+    diff[abs(diff)>2] = 0
+    diff_corr = yaw_conv(diff)
+    # zhibei's yaw offset correction
+    diff3 = data['map']['yaw'] - (data['test']['azimuth'] + diff_corr)    
+    diff3[abs(diff3) > 2] = 0
+    
+    diff2 = data['map']['yaw'] - data['test']['yaw2'] 
+    diff2[abs(diff2) > 2] = 0
+    plt.plot(diff3, 'g', label='gps corrected map-azimuth')
+    plt.plot(diff_corr, 'r', linewidth=4, label='gps correction')
+    # localization yaw offset correction
+    plt.plot(diff2, 'b', label='map - test_azimuth2')
     plt.legend(loc='upper left')
+    
+    # map yaw and test yaw
+    # plt.subplot(513)
+    # diff = data['map']['yaw'] - data['test']['yaw']
+    # diff[abs(diff) > 2] = 0
+    # # filter, smooth
+    # if filter_enable:
+    #     diff = savitzky_golay(diff, 2001, 3)
+    # plt.plot(diff, 'r.', label='map - test_gps')
+    # plt.legend(loc='upper left')
 
+    # test yaw and azimuth
     plt.subplot(514)
     diff = data['test']['yaw'] - data['test']['azimuth']
     diff[abs(diff) > 2] = 0
-    # filter, smooth
-    # diff = savitzky_golay(diff, 2001, 3)
-    window = 10000
-    diff_w = []
-    sum = 0
-    for i in range (0, len(diff)):
-        if i < window:
-            sum += diff[i]
-            diff_w.append(diff[i])
-        else:
-            sum += diff[i]
-            sum -= diff[i-window]
-            ave = sum/window
-            diff_w.append(ave)
 
+    diff2 = yaw_conv(diff)
 
     plt.plot(diff, 'r.', label='test_gps - test_azimuth')
-    # plt.plot(diff_w, 'g.', label='average inspvax-gps_yaw')
+    plt.plot(diff2, 'b.', label='gps yaw correction')
+    plt.plot(loc_correction, 'g.', label='localization correction')
     plt.legend(loc='upper left')
+    
+    # bestvel and azimuth
     plt.subplot(515)
     diff = data['test']['bestvel'] - data['test']['azimuth']
     diff[abs(diff) > 2] = 0
-
     # filter, smooth
     if filter_enable:
         diff = savitzky_golay(diff, 2001, 3)
@@ -172,7 +185,15 @@ def plot():
     plt.legend(loc='upper left')
 
     plt.show()
-
-
+    dx, dy = np.array(delta_pos['x']), np.array(delta_pos['y'])
+    theta = data['test']['azimuth']
+    dx_body = dx * np.cos(theta) - dy * np.sin(theta)
+    dy_body = dx * np.sin(theta) + dy * np.cos(theta)
+    dx_body[abs(dx_body)>2] = 0
+    dy_body[abs(dy_body)>2] = 0
+    plt.plot(dx_body, 'r', label='postion error on x')
+    # plt.plot(dy_body, 'b', label='postion error on y')
+    plt.legend(loc='upper left')
+    plt.show()
 parse()
 plot()
