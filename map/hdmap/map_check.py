@@ -49,7 +49,7 @@ def parse():
                 data['map']['y'].append(ref_p.y)
                 delta_pos['x'].append(ref_p.x - x)
                 delta_pos['y'].append(ref_p.y - y)
-                
+
             except:
                 pass
 
@@ -67,7 +67,7 @@ def parse():
         for i in range(0, len(data[k]['yaw'])):
             if data[k]['yaw'][i] < 0:
                 data[k]['yaw'][i] += 360
-        
+
         data[k]['yaw'] = np.append(data[k]['yaw'], data[k]['yaw'][-1])
     print data['map']['yaw'][222:55555]
 
@@ -124,34 +124,34 @@ def plot():
     plt.legend(loc='upper left')
 
     plt.subplot(512)
-    
+
     diff = data['map']['yaw'] - data['test']['azimuth']
-    diff2 = data['map']['yaw'] - data['test']['yaw2'] 
+    diff2 = data['map']['yaw'] - data['test']['yaw2']
     diff[abs(diff) > 2] = 0
     diff2[abs(diff2) > 2] = 0
-    
+
     # original
-    plt.plot(diff, 'r', label='map - test_azimuth') 
+    plt.plot(diff, 'r', label='map - test_azimuth')
     # localization yaw offset correction
     plt.plot(diff2, 'b', label='map - test_azimuth2')
     plt.legend(loc='upper left')
-    
+
     plt.subplot(513)
     diff = data['test']['yaw'] - data['test']['azimuth']
     diff[abs(diff)>2] = 0
     diff_corr = yaw_conv(diff)
     # zhibei's yaw offset correction
-    diff3 = data['map']['yaw'] - (data['test']['azimuth'] + diff_corr)    
+    diff3 = data['map']['yaw'] - (data['test']['azimuth'] + diff_corr)
     diff3[abs(diff3) > 2] = 0
-    
-    diff2 = data['map']['yaw'] - data['test']['yaw2'] 
+
+    diff2 = data['map']['yaw'] - data['test']['yaw2']
     diff2[abs(diff2) > 2] = 0
     plt.plot(diff3, 'g', label='gps corrected map-azimuth')
     plt.plot(diff_corr, 'r', linewidth=4, label='gps correction')
     # localization yaw offset correction
     plt.plot(diff2, 'b', label='map - test_azimuth2')
     plt.legend(loc='upper left')
-    
+
     # map yaw and test yaw
     # plt.subplot(513)
     # diff = data['map']['yaw'] - data['test']['yaw']
@@ -173,7 +173,7 @@ def plot():
     plt.plot(diff2, 'b.', label='gps yaw correction')
     plt.plot(loc_correction, 'g.', label='localization correction')
     plt.legend(loc='upper left')
-    
+
     # bestvel and azimuth
     plt.subplot(515)
     diff = data['test']['bestvel'] - data['test']['azimuth']
