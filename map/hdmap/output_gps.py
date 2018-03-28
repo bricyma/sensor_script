@@ -26,8 +26,8 @@ class PosType:
             for topic, msg, t in bag.read_messages(topics=['/novatel_data/bestvel']):
                 self.bestvel.append(msg.trk_gnd)
 
-            for topic, msg, t in bag.read_messages(topics=['/error_monitor/error_info']):
-                self.dis_to_lane_center.append(msg.dis_to_lane_center)
+            # for topic, msg, t in bag.read_messages(topics=['/error_monitor/error_info']):
+            #     self.dis_to_lane_center.append(msg.dis_to_lane_center)
         with open(self.file_name, 'w') as the_file:
             count = 0
             for bag in self.bag:
@@ -37,8 +37,7 @@ class PosType:
                                    str(msg.azimuth) + ' ' +
                                    str(msg.roll) + ' ' + 
                                    str(msg.pitch) + ' ' + 
-                                   str(self.bestvel[int(count / 2.5)]) + ' ' + 
-                                   str(self.dis_to_lane_center[int(count / 2)]) + ' \n')
+                                   str(self.bestvel[int(count / 2.5)]) + ' ' + ' \n')
                     count += 1
                     # print count
                     if count >= len(self.bestvel) * 2.5:

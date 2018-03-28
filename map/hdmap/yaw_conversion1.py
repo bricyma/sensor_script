@@ -1,8 +1,11 @@
 from transformation_util import *
+from collections import deque
 
 class YawConversion:
     def __init__(self):
-
+        window_size = 2000
+        self.corr_angle = deque(maxlen=window_size)
+        self.corr_angle.append(0)
         self.base_lat = 32.75707  # center between tucson and phoenix
         self.base_lon = -111.55757
         
@@ -11,12 +14,12 @@ class YawConversion:
         self.base_gnss_trans = GNSSTransformer()
         self.base_gnss_trans.set_base(self.base_lat, self.base_lon)
         self.vehicle_gnss_trans = GNSSTransformer()
-        self.base_North_GPS = self.base_gnss_trans.xy2latlon(np.array([[0., 0.], [1., 1.]]))
+        self.base_North_GPS = self.base_gnss_trans.xy2latlon(np.array([[0., 0.], [0., 1.]]))
             
 
     # start from local north, x+1
     def inspvax_wrap(self, lat, lon, azimuth):
-        x, y, z = self.base_gnss_trans.latlon2xy(np.array([self.base_lat, self.base_lon, 0]))
+        x, y, z = self.base_gnss_trans.latlon2xy(np.array([lat, lon, 0]))
         self.vehicle_gnss_trans.set_base(lat, lon)
         delta, yaw = self.yaw_conversion(azimuth)
         return delta, yaw
@@ -27,6 +30,19 @@ class YawConversion:
         angle = np.arctan2(pts_enu[0], pts_enu[1])
         angle = np.rad2deg(angle)
         return angle, azimuth - angle
+
+    def yaw_corr(self, map_yaw, azimuth):
+        if abs(map_yaw - azimuth) < 1:
+            self.corr_angle.append(map_yaw - azimuth)
+        return np.mean(self.corr_angle)
+
+    # for LPS
+    # def yaw_corr(pts_before, pts_now):
+    #     pts_delta = pts_now - pts_before
+    #     angle = np.rad2deg(np.arctan2(pts_delta[0], pts_delta[1]))
+    #     if angle < 1:
+    #         self.corr_angle.append(angle)
+    #     return np.mean(corr_angle)
 
     # calculate the east, north position error between local world and global world (not accurate) 
     # check the ll2xy distortion

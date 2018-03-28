@@ -39,7 +39,7 @@ def parse():
                 p = Point3d(x, y)
                 ref_p = map.get_ref_pt(p)
                 data['test']['azimuth'].append(azimuth)
-                data['test']['bestvel'].append(float(a[3]))
+                data['test']['bestvel'].append(float(a[5]))
                 data['test']['x'].append(x)
                 data['test']['y'].append(y)
                 corr, azi = yaw_conver.inspvax_wrap(lat, lon, azimuth)
@@ -69,7 +69,6 @@ def parse():
                 data[k]['yaw'][i] += 360
 
         data[k]['yaw'] = np.append(data[k]['yaw'], data[k]['yaw'][-1])
-    print data['map']['yaw'][222:55555]
 
 def RAD2DEG(rad):
     return rad * 180 / np.pi
