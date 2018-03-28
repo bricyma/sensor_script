@@ -76,6 +76,8 @@ class YawConversion:
         pts_llh = self.base_gnss_trans.xy2latlon(np.array([x, y]))
         self.vehicle_gnss_trans.set_base(pts_llh[0], pts_llh[1])
         
+        # print self.vehicle_gnss_trans.latlon2xy(pts_llh)
+
         pts_llh2 = self.base_gnss_trans.xy2latlon(np.array([x2, y2]))
         pts_enu2 = self.vehicle_gnss_trans.latlon2xy(pts_llh2)
         yaw = np.rad2deg(np.arctan2(pts_enu2[0], pts_enu2[1]))

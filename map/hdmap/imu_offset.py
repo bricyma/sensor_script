@@ -11,15 +11,14 @@ map_file = "I-10_Tucson2Phoenix_20180323.hdmap"
 gps_file = sys.argv[1]
 filter_enable = False
 
-# yaw is derived from x,y path
+# yaw is derived from x,y path in global coordination
 # yaw2 is derived from Yaw conversion by calculating the offset between north and true north
 # azimuth is from azimuth in INSPVAX
 data = {'test': {'x': [], 'y': [], 'azimuth': [], 'yaw': [], 'bestvel': [], 'yaw2': []},
-        'map': {'x': [], 'y': [], 'yaw': []}}
+        'map': {'x': [], 'y': [], 'yaw': [], 'yaw2': []}}
 delta_pos = {'x': [], 'y': []}
 baseLat = 32.75707
 baseLon = -111.55757
-trans = gps_transformer()
 yaw_conver = YawConversion()
 loc_correction = []
 with open(map_file, 'rb') as f:
@@ -34,17 +33,31 @@ def parse():
             try:
                 count += 1
                 a = line.split(' ')
-                lat, lon, azimuth = float(a[0]), float(a[1]), float(a[2])
+                lat, lon, azimuth, bestvel = float(a[0]), float(a[1]), float(a[2]), float(a[5])
                 x, y = latlon2xy(lat, lon)
                 p = Point3d(x, y)
                 ref_p = map.get_ref_pt(p)
                 data['test']['azimuth'].append(azimuth)
                 data['test']['x'].append(x)
                 data['test']['y'].append(y)
+                data['test']['bestvel'].append(bestvel)
                 data['map']['x'].append(ref_p.x)
                 data['map']['y'].append(ref_p.y)
             except:
                 pass
+    # global to local, x,y,x2,y2 => lat,lng => x',y', x2',y2' => yaw2
+    for k in data:
+        for i in range(0, len(data[k]['x'])-1):
+            x = data[k]['x'][i]
+            y = data[k]['y'][i]
+            x2 = data[k]['x'][i+1]
+            y2 = data[k]['y'][i+1]
+            yaw = yaw_conver.pos_conversion3(x,y,x2,y2)
+            if yaw < -10:
+                yaw += 360
+            data[k]['yaw2'].append(yaw)
+        data[k]['yaw2'].append(data[k]['yaw2'][-1])
+        
     for d in data:
         for k in data[d]:
             data[d][k] = np.array(data[d][k])
@@ -65,30 +78,92 @@ def parse():
 def RAD2DEG(rad):
     return rad * 180 / np.pi
 
+def check(diff):
+    for i in range(0, len(diff)):
+        if diff[i] < -300:
+            diff[i] += 360
+    diff[abs(diff)>2] = 0
+    return diff
 
 def plot():
     plt.subplot(511)
-    plt.plot(data['map']['yaw'], 'r', label='map_gps')
+    plt.plot(data['map']['yaw2'], 'r', label='map_gps')
+
     plt.plot(data['test']['yaw'], 'b', label='test_gps')
     plt.plot(data['test']['azimuth'], 'g', label='test_azimuth')
     plt.legend(loc='upper left')
 
-   
+    plt.subplot(512)
+    diff = data['test']['yaw2'] - data['test']['yaw']
+    for i in range(0, len(diff)):
+        if diff[i] < -300:
+            diff[i] += 360
+    diff[abs(diff)>2] = 0
+    plt.plot(diff, 'r.', label = 'local yaw - global yaw')
+    plt.plot([0]*len(diff), 'g', linewidth=3,  label='0')
+    print 'mean of corrected yaw: ', np.mean(diff)
+    plt.legend(loc='upper left')
+
+    plt.subplot(513)
+    diff = data['test']['yaw2'] - data['test']['azimuth']
+    for i in range(0, len(diff)):
+        if diff[i] < -300:
+            diff[i] += 360
+    diff[abs(diff) > 2] = 0
+    plt.plot(diff, 'r.', label = 'local yaw - azimuth')
+    plt.plot([0]*len(diff), 'g', linewidth=3,  label='0')
+    print 'mean of local yaw-azimuth: ', np.mean(diff)
+
+    plt.legend(loc='upper left')
+
     plt.subplot(514)
     diff = data['test']['yaw'] - data['test']['azimuth']
     diff[abs(diff) > 2] = 0
-    plt.plot(diff, 'r.', label='test_gps - test_azimuth')
+    plt.plot(diff, 'r.', label='global yaw - azimuth')
+    plt.plot([0]*len(diff), 'g', linewidth=3,  label='0')
     plt.legend(loc='upper left')
 
     # bestvel and azimuth
     plt.subplot(515)
     diff = data['test']['bestvel'] - data['test']['azimuth']
     diff[abs(diff) > 2] = 0
-    # filter, smooth
-    if filter_enable:
-        diff = savitzky_golay(diff, 2001, 3)
+  
     plt.plot(diff, 'r.', label='bestvel - azimuth')
+    print 'mean of bestvel-azimuth: ', np.mean(diff)
+    plt.plot([0]*len(diff), 'g', linewidth=3,  label='0')
     plt.legend(loc='upper left')
     plt.show()
+
+    # show bestvel
+    plt.plot(data['test']['bestvel'], 'r.', label='bestvel')
+    plt.plot(data['test']['azimuth'], 'b.', label='azimuth')
+    plt.legend(loc='upper left')
+    plt.show()
+
+    # show map
+    plt.subplot(211)
+    diff = data['test']['azimuth'] - data['map']['yaw2']
+    diff = check(diff)
+    plt.plot(diff, 'r.', label='azimuth - map yaw2')
+    plt.plot([0]*len(diff), 'g', linewidth=3,  label='0')
+    plt.legend(loc='upper left')
+
+    plt.subplot(212)
+    diff = data['test']['bestvel'] - data['map']['yaw2']
+    diff = check(diff)
+    plt.plot(diff, 'r.', label='bestvel - map yaw2')
+    plt.plot([0]*len(diff), 'g', linewidth=3,  label='0')
+    plt.legend(loc='upper left')
+    plt.show()
+
+    # bestvel match local gps
+    diff = data['test']['yaw2'] - data['test']['bestvel']
+    diff = check(diff)
+    plt.plot(diff, 'r.', label='local yaw - map yaw2')
+    plt.plot([0]*len(diff), 'g', linewidth=3,  label='0')
+    plt.legend(loc='upper left')
+    plt.show()
+
+
 parse()
 plot()
