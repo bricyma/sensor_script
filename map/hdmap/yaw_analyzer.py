@@ -27,13 +27,13 @@ class YawAnalyzer:
         # yaw2: bestvel - local_yaw
         # yaw3: inspvax - bestvel
         self.data_window = {'test': {'d_yaw1': [], 'd_yaw2': [], 'd_yaw3': []}}
-
+        self.data_no_window = {'test': {'d_yaw1': [], 'd_yaw2': [], 'd_yaw3': []}}
 
         with open(map_file, 'rb') as f:
             submap = f.read()
         self.map = TSMap(submap)
         self.parse()
-        self.plot(self.data_window)
+        self.plot(self.data_window, self.data_no_window)
         print gps_file
         print("--- %s seconds ---" % (time.time() - start_time))
 
@@ -73,7 +73,7 @@ class YawAnalyzer:
                 self.data[d][k] = np.array(self.data[d][k])
 
         # calculate window sized yaw diff between inspvax, bestvel and local yaw
-        window_size = 10000
+        window_size = 20000
         yaw_diff = deque(maxlen=window_size)  
         for d_window in self.data_window['test']:
             sum = 0
@@ -84,10 +84,17 @@ class YawAnalyzer:
             else:
                 diff = self.data['test']['azimuth'] - self.data['test']['bestvel']
 
-            diff2 = []
-            for d in diff:
+            diff2 = [0]
+            for i, d in enumerate(diff):
+                # threshold: 1
                 if abs(d) < 1:
                     diff2.append(d)
+                elif d > 1:
+                    diff2.append(diff2[i-1])
+                else:
+                    diff2.append(diff2[i-1])
+            # data_no_win has window size 1
+            self.data_no_window['test'][d_window] = diff2
             for i in range(0, len(diff2)):
                 sum += diff2[i]
                 if i >= window_size:
@@ -95,21 +102,38 @@ class YawAnalyzer:
                     ave = sum/window_size
                 else:
                     ave = sum/(i+1)
-                self.data_window['test'][d_window].append(-ave)
-
-    def plot(self, data_window):
+                self.data_window['test'][d_window].append(ave)
+        
+    def plot(self, data_window, data_no_window):
         # inspvax: azimuth
         # bestvel: trk_gnd
         # gps: local_yaw
         # map: local_map
         fig = plt.figure()
         fig.suptitle(self.gps_file, fontsize=20)
-
         # d_yaw1: inspvax - local_yaw
         # d_yaw2: bestvel - local_yaw
         # d_yaw3: inspvax - bestvel
         Len = len(data_window['test']['d_yaw1'])
 
+        plt.subplot(311)
+        plt.plot(data_no_window['test']['d_yaw1'], 'r.', label='inspvax - local yaw')
+        plt.plot([0]*Len, 'g', linewidth=3,  label='0')
+        plt.legend(loc=2, prop={'size': 9})
+
+        plt.subplot(312)
+        plt.plot(data_no_window['test']['d_yaw2'], 'r.', label = 'bestvel - local_yaw')
+        plt.plot([0]*Len, 'g', linewidth=3,  label='0')
+        plt.legend(loc=2, prop={'size': 9})
+
+        plt.subplot(313)
+        plt.plot(data_no_window['test']['d_yaw3'], 'r.', label = 'inspvax - bestvel')
+        plt.plot([0]*Len, 'g', linewidth=3,  label='0')
+        plt.legend(loc=2, prop={'size': 9})
+        fig.savefig('figure/'+ self.gps_file.split('/')[1] + '-no-window.jpg')
+
+        fig = plt.figure()
+        fig.suptitle(self.gps_file, fontsize=20)
         plt.subplot(311)
         plt.plot(data_window['test']['d_yaw1'], 'r.', label='inspvax - local yaw')
         plt.plot([0]*Len, 'g', linewidth=3,  label='0')
@@ -124,9 +148,7 @@ class YawAnalyzer:
         plt.plot(data_window['test']['d_yaw3'], 'r.', label = 'inspvax - bestvel')
         plt.plot([0]*Len, 'g', linewidth=3,  label='0')
         plt.legend(loc=2, prop={'size': 9})
-
-        # plt.show()
-        fig.savefig('figure/'+ self.gps_file.split('/')[1] + '.jpg')
+        fig.savefig('figure/'+ self.gps_file.split('/')[1] + '-window.jpg')
 
 if __name__ == '__main__':
     data_path = 'gps_data/'
