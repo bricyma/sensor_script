@@ -1,4 +1,13 @@
 #!/usr/bin/env python
+
+# usage: python yaw_analyzer.py
+# YawAnalyzer is used to get the relationship between azimuth from INSPVAX, 
+# trk_gnd from BESTVEL and local yaw from coordinate transformation.
+# input: 
+# gps file containing latitude, longitude, azimuth, trk_gnd
+# hdmap
+# output: 
+# result is stored in figure
 import matplotlib.pyplot as plt
 import numpy as np
 from tsmap import TSMap, Lane, Point3d, Bound, latlon2xy

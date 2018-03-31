@@ -8,7 +8,7 @@ from yaw_conversion1 import *
 from collections import deque
 
 # map_file = "I-10_Phoenix2Tucson_20180315.hdmap"
-map_file = "I-10_Tucson2Phoenix_20180323.hdmap"
+map_file = "I-10_Tucson2Phoenix_20180327.hdmap"
 gps_file = sys.argv[1]
 filter_enable = False
 
