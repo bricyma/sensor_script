@@ -50,49 +50,57 @@ class ErrorAnalyzer:
 		fig.suptitle(self.file_name + ' ' + self.ts_begin + '~' + self.ts_end, fontsize=20)
 		Len = len(gps_data_window['d_yaw1'])
 		plt.figure(1)
-
 		plt.subplot(411)
 		plt.plot(gps_data_window['d_yaw2'], 'r.', label='window: bestvel - local_yaw')
 		plt.plot([0]*Len, 'g', linewidth=3,  label='0')
 		plt.plot([np.mean(gps_data_no_window['d_yaw2'])]*Len, 'b', linewidth=3,  label='mean')
-		plt.legend(loc=2, prop={'size': 9})
+		plt.legend(loc=2, prop={'size': 7})
 		plt.subplot(412)
 		plt.plot(gps_data_no_window['d_yaw2'], 'r.', label='no window: bestvel - local_yaw')
 		plt.plot([0]*Len, 'g', linewidth=3,  label='0')
 		plt.plot([np.mean(gps_data_no_window['d_yaw2'])]*Len, 'b', linewidth=3,  label='mean')
 		print 'mean of (bestvel-local_yaw): ', np.mean(gps_data_no_window['d_yaw2'])
-		plt.legend(loc=2, prop={'size': 9})
+		plt.legend(loc=2, prop={'size': 7})
 		plt.subplot(413)
 		plt.plot(gps_data_window['d_yaw3'], 'r.', label='window: inspvax - bestvel')
 		plt.plot([0]*Len, 'g', linewidth=3,  label='0')
-		plt.legend(loc=2, prop={'size': 9})
+		plt.plot([np.mean(gps_data_window['d_yaw3'])]*Len, 'b', linewidth=3,  label='mean')
+		plt.legend(loc=2, prop={'size': 7})
 		plt.subplot(414)
 		plt.plot(gps_data_no_window['d_yaw3'], 'r.', label='no window: inspvax - bestvel')
 		plt.plot([0]*Len, 'g', linewidth=3,  label='0')
-		plt.legend(loc=2, prop={'size': 9})
-
+		plt.plot([np.mean(gps_data_no_window['d_yaw3'])]*Len, 'b', linewidth=3,  label='mean')
+		plt.legend(loc=2, prop={'size': 7})
+		print 'mean of (inspvax - bestvel): ', np.mean(gps_data_no_window['d_yaw3'])
+		fig = plt.figure()
+		fig.suptitle(self.file_name + ' ' + self.ts_begin + '~' + self.ts_end, fontsize=20)
+		
 		plt.figure(2)
 		plt.subplot(411)
 		plt.plot(gps_data_window['d_yaw1'], 'r.', label='window: inspvax - local_yaw')
 		plt.plot([0]*Len, 'g', linewidth=3,  label='0')
-		plt.legend(loc=2, prop={'size': 9})
+		plt.legend(loc=2, prop={'size': 7})
 		plt.subplot(412)
 		plt.plot(gps_data_no_window['d_yaw1'], 'r.', label='no window: inspvax - local_yaw')
 		plt.plot([0]*Len, 'g', linewidth=3,  label='0')
-		plt.legend(loc=2, prop={'size': 9})
+		plt.legend(loc=2, prop={'size': 7})
 		plt.subplot(413)
 		error_window = np.array(error_window)
 		error_window[abs(error_window)>1] = 0
 		plt.plot(error_window, 'r.', label='window: error_data')
 		plt.plot([0]*Len, 'g', linewidth=3,  label='0')
-		plt.legend(loc=2, prop={'size': 9})
+		plt.legend(loc=2, prop={'size': 7})
 		plt.subplot(414)
 		error_no_window = np.array(error_no_window)
 		error_no_window[abs(error_no_window)>1] = 0
 		plt.plot(error_no_window, 'r.', label='no window: error_data')
 		plt.plot([0]*Len, 'g', linewidth=3,  label='0')
-		plt.legend(loc=2, prop={'size': 9})
+		plt.legend(loc=2, prop={'size': 7})
+		
+		print 'corrcef: ', np.corrcoef([gps_data_window['d_yaw1'], error_window])[1,0]
 		plt.show()
+
+
 
 if __name__ == '__main__':
 	# bag_name = '2018-03-24-17-52-31' # no error_info 
@@ -101,13 +109,17 @@ if __name__ == '__main__':
 	# bag_name = '2018-03-25-19-19-41'
 	# bag_name = '2018-03-27-13-46-05'
 	# bag_name = '2018-03-27-16-03-26'	
-	bag_name = '2018-03-27-21-40-24'
-	# bag_name = '2018-03-27-22-47-57'
+	# bag_name = '2018-03-27-21-40-24'
+	bag_name = '2018-03-27-22-47-57'
 	# bag_name = '2018-03-28-16-55-36'
 	# bag_name = '2018-03-28-18-18-45'
 	# bag_name = '2018-03-29-14-28-56'
 	# bag_name = '2018-03-29-15-51-57'
 	# bag_name = '2018-03-29-16-52-35'
+	# bag_name = '2018-03-30-11-29-02'
+	# bag_name = '2018-03-30-12-20-17'
+	# bag_name = '2018-03-30-14-32-54'
+	bag_name = '2018-03-30-16-42-42'
 
 	ts_begin = '0:00'
 	ts_end = '60:00'

@@ -95,7 +95,7 @@ class YawAnalyzer:
                                             self.gps_data['azimuth'][i], self.gps_data['trk_gnd'][i],  
                 x, y = latlon2xy(lat, lon)
                 p = Point3d(x, y)   
-                ref_p = self.map.get_ref_pt(p)
+                # ref_p = self.map.get_ref_pt(p)  # filter those not in map
                 self.data['lat'].append(lat)
                 self.data['lon'].append(lon)
                 self.data['azimuth'].append(azimuth)
