@@ -33,7 +33,9 @@ class ErrorAnalyzer:
 		for msg in ins_data:
 			data['lat'].append(msg.latitude)
 			data['lon'].append(msg.longitude)
-			data['azimuth'].append(msg.azimuth)
+			# data['azimuth'].append(msg.azimuth)
+			# insspd TODO
+			# data['azimuth'].append(msg.track_ground)
 		for msg in bestvel_data:
 			data['trk_gnd'].append(msg.trk_gnd)
 		return data
@@ -97,7 +99,7 @@ class ErrorAnalyzer:
 		plt.plot([0]*Len, 'g', linewidth=3,  label='0')
 		plt.legend(loc=2, prop={'size': 7})
 		
-		print 'corrcef: ', np.corrcoef([gps_data_window['d_yaw1'], error_window])[1,0]
+		# print 'corrcef: ', np.corrcoef([gps_data_window['d_yaw1'], error_window])[1,0]
 		plt.show()
 
 
@@ -110,7 +112,7 @@ if __name__ == '__main__':
 	# bag_name = '2018-03-27-13-46-05'
 	# bag_name = '2018-03-27-16-03-26'	
 	# bag_name = '2018-03-27-21-40-24'
-	bag_name = '2018-03-27-22-47-57'
+	# bag_name = '2018-03-27-22-47-57'
 	# bag_name = '2018-03-28-16-55-36'
 	# bag_name = '2018-03-28-18-18-45'
 	# bag_name = '2018-03-29-14-28-56'
@@ -119,9 +121,21 @@ if __name__ == '__main__':
 	# bag_name = '2018-03-30-11-29-02'
 	# bag_name = '2018-03-30-12-20-17'
 	# bag_name = '2018-03-30-14-32-54'
-	bag_name = '2018-03-30-16-42-42'
-
+	# bag_name = '2018-03-30-16-42-42'
+	# bag_name = '2018-04-02-15-01-12'
+	# bag_name = '2018-04-02-17-21-10'
+	# bag_name = '2018-03-24-17-52-31'
+	bag_name = '2018-03-29-14-08-55'
+	# MKZ test
+	# bag_name = '2018-02-28-14-53-01'
+	# bag_name = '2018-02-28-18-36-14'
+	# bag_name = '2018-03-23-14-42-29'
+	# bag_name = '2018-04-02-14-18-15'
+	# bag_name = '2018-04-02-15-00-08'
+	# bag_name = '2018-04-02-16-29-15'
+	# bag_name = '2018-03-18-12-56-25'
+	# bag_name = '2018-03-16-11-13-56'
 	ts_begin = '0:00'
-	ts_end = '60:00'
+	ts_end = '200:00'
 	info = {'bag_name': bag_name, 'ts_begin': ts_begin, 'ts_end': ts_end}
 	analyzer = ErrorAnalyzer(info)

@@ -19,4 +19,5 @@ class DataParser:
    	 		error_data.append(error)
 			gps_data.append(gps)
 			bestvel_data.append(bestvel)
+
 		return error_data, gps_data, bestvel_data
