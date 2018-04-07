@@ -16,6 +16,7 @@ from collections import deque
 import time
 import glob
 from llh2enu.llh2enu_gps_transformer import *
+from gnss_transformer import GPSTransformer
 
 class YawAnalyzer:
     def __init__(self, error_data, gps_data):
@@ -125,14 +126,14 @@ class YawAnalyzer:
             lat2 = self.data['lat'][i+1]
             lon2 = self.data['lon'][i+1]        
             # from wikipedia 
-            x1, y1 = self.transformer.llh2enu_2(lat, lon, 0, lat, lon, 0)
-            x2, y2 = self.transformer.llh2enu_2(lat2, lon2, 0, lat, lon, 0)
+            # x1, y1 = self.transformer.llh2enu_2(lat, lon, 0, lat, lon, 0)
+            # x2, y2 = self.transformer.llh2enu_2(lat2, lon2, 0, lat, lon, 0)
             # octopus llh2enu
-            # self.vehicle_gnss_trans.set_base(lat, lon)   
-            # enu_pt = self.vehicle_gnss_trans.latlon2xy(np.array([lat, lon]))
-            # enu_pt2 = self.vehicle_gnss_trans.latlon2xy(np.array([lat2, lon2]))
-            # enu = (np.array(enu_pt2) - np.array(enu_pt))
-            # x2, y2 = enu[0], enu[1]
+            self.vehicle_gnss_trans.set_base(lat, lon)   
+            enu_pt = self.vehicle_gnss_trans.latlon2xy(np.array([lat, lon]))
+            enu_pt2 = self.vehicle_gnss_trans.latlon2xy(np.array([lat2, lon2]))
+            enu = (np.array(enu_pt2) - np.array(enu_pt))
+            x2, y2 = enu[0], enu[1]
 
             # print lat2, lon2
             # ll_pt = self.vehicle_gnss_trans.xy2latlon(np.array(enu_pt))
@@ -140,7 +141,6 @@ class YawAnalyzer:
             # lat2_1, lon2_2 = xy2latlon(x2, y2)
             # print lat2_2, lon2_2
             self.data['yaw2'].append(np.rad2deg(np.arctan2(x2,y2)))
-        
         self.data['yaw2'].append(self.data['yaw2'][-1])
 
         for k in self.data:
