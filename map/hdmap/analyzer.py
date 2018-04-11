@@ -31,7 +31,7 @@ class YawAnalyzer:
         self.data = {'lat': [], 'lon': [], 'x': [], 'y': [], 'azimuth': [], 'trk_gnd': [], 'yaw': [], 'yaw2': []}
         self.yaw_conver = YawConversion()
         self.transformer = gps_transformer() 
-        self.vehicle_gnss_trans = GNSSTransformer() # octopus's llh2enu transformation
+        self.vehicle_gnss_trans = GPSTransformer() # octopus's llh2enu transformation
 
         with open(map_file, 'rb') as f:
             submap = f.read()

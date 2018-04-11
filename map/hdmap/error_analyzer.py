@@ -17,7 +17,6 @@ class ErrorAnalyzer:
         error, pose_data, ins_data, bestvel_data = parser.parse()
 
         self.gps_data = {'lat': [], 'lon': [], 'azimuth': [], 'trk_gnd': []}
-
         # warp localization pose data
         self.pose_warp(pose_data)
         # warp gps data
@@ -25,12 +24,13 @@ class ErrorAnalyzer:
         error_data = self.error_warp(error)
         # parse gps data to get the yaw difference
         yaw_analyzer = YawAnalyzer(error_data, self.gps_data)
-        # gps_data_window={'d_yaw1':[], 'd_yaw2':[], 'd_yaw3':[]}
-        # d_yaw1: inspvax - local_yaw
-        # d_yaw2: bestvel - local_yaw
-        # d_yaw3: inspvax - bestvel
-        errow_window, error_no_window, gps_data_window, gps_data_no_window = yaw_analyzer.parse()  # yaw difference
-
+        """
+        gps_data_window={'d_yaw1':[], 'd_yaw2':[], 'd_yaw3':[]}
+        d_yaw1: inspvax - local_yaw
+        d_yaw2: bestvel - local_yaw
+        d_yaw3: inspvax - bestvel
+        """
+        errow_window, error_no_window, gps_data_window, gps_data_no_window = yaw_analyzer.parse()
         self.plot(errow_window, error_no_window,
                   gps_data_window, gps_data_no_window)
 
@@ -48,10 +48,7 @@ class ErrorAnalyzer:
             self.gps_data['lon'].append(msg.longitude)
             # data['azimuth'].append(msg.azimuth)
 
-            # insspd TODO
-            # data['azimuth'].append(msg.track_ground)
         for msg in bestvel_data:
-            # data['trk_gnd'].append(msg.track_ground)
             self.gps_data['trk_gnd'].append(msg.trk_gnd)
 
     def error_warp(self, error):
@@ -115,13 +112,13 @@ class ErrorAnalyzer:
         plt.subplot(413)
         error_window = np.array(error_window)
         error_window[abs(error_window) > 1] = 0
-        plt.plot(error_window, 'r.', label='window: error_data')
+        plt.plot(error_window, 'r', label='window: error_data')
         plt.plot([0] * Len, 'g', linewidth=3,  label='0')
         plt.legend(loc=2, prop={'size': 7})
         plt.subplot(414)
         error_no_window = np.array(error_no_window)
         error_no_window[abs(error_no_window) > 1] = 0
-        plt.plot(error_no_window, 'r.', label='no window: error_data')
+        plt.plot(error_no_window, 'r', label='no window: error_data')
         plt.plot([0] * Len, 'g', linewidth=3,  label='0')
         plt.legend(loc=2, prop={'size': 7})
 
@@ -155,7 +152,9 @@ if __name__ == '__main__':
     # bag_name = '2018-04-04-14-30-09'
     # bag_name = '2018-04-04-16-46-39'
     # bag_name = '2018-04-06-11-39-06'
-    bag_name = '2018-04-06-13-39-28'
+    # bag_name = '2018-04-06-13-39-28'
+    # bag_name = '2018-04-09-14-40-14'
+    bag_name = '2018-04-09-16-08-16'
     # MKZ test
     # bag_name = '2018-02-28-14-53-01'
     # bag_name = '2018-02-28-18-36-14'
