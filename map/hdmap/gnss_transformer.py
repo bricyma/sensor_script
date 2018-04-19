@@ -10,6 +10,7 @@ e2 = 1 - (b / a) * (b / a)
 f = (a - b) / a
 e_sq = f * (2 - f)
 
+
 class GPSTransformer:
     def __init__(self):
         self.er = 6378137.0
@@ -19,7 +20,7 @@ class GPSTransformer:
 
     def set_base(self, base_lat, base_lon):
         self.base_lat, self.base_lon = base_lat, base_lon
-     
+
     def latlon2xy(self, pts):
         is_vector_input = len(pts.shape) < 2
         if is_vector_input:
@@ -55,9 +56,6 @@ class GPSTransformer:
                (h + N) * cos_phi * sin_lam, \
                (h + (b * b) / (a * a) * N) * sin_phi
 
-
-
-
     def ecef2enu(self, x, y, z):
         lat0 = self.base_lat
         lon0 = self.base_lon
@@ -79,16 +77,16 @@ class GPSTransformer:
         zd = z - z0
         return -sin_lam * xd + cos_lam * yd, \
                -cos_lam * sin_phi * xd - sin_phi * sin_lam * yd + cos_phi * zd, \
-               cos_phi * cos_lam * xd + cos_phi * sin_lam * yd + sin_phi * zd
+            cos_phi * cos_lam * xd + cos_phi * sin_lam * yd + sin_phi * zd
 
 
 if __name__ == '__main__':
     base_lat = 32.75707123656  # center between tucson and phoenix
-    base_lon = -111.55757123656   
+    base_lon = -111.55757123656
     cc = GPSTransformer()
-    
-    lat = 32.4002113023   
-    lon = -111.130179869 
+
+    lat = 32.4002113023
+    lon = -111.130179869
     lat2 = lat - 0.00002
     lon2 = lon - 0.00002
     # lat2 = 32.4002047143
@@ -107,8 +105,7 @@ if __name__ == '__main__':
     enu = (np.array(enu_pt2) - np.array(enu_pt))
     print np.rad2deg(np.arctan2(enu[0], enu[1]))
 
-
-    dd = gps_transformer() 
+    dd = gps_transformer()
     x, y = dd.llh2enu_2(lat, lon, 0, lat, lon, 0)
     x2, y2 = dd.llh2enu_2(lat2, lon2, 0, lat, lon, 0)
-    print np.rad2deg(np.arctan2(x2-x,y2-y))
+    print np.rad2deg(np.arctan2(x2 - x, y2 - y))

@@ -73,9 +73,6 @@ class YawAnalyzer:
                 d -= 360
             if abs(d) < 1:
                 diff2.append(d)
-            elif d > 1:
-                # diff2.append(diff2[i-1])
-                diff2.append(0)
             else:
                 diff2.append(0)
         for i in range(0, len(diff2)):
