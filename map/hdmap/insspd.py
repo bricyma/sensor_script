@@ -9,14 +9,20 @@ from parse import DataParser
 class INSAnalyzer:
     def __init__(self, info):
         parser = DataParser(info)
-        insspd_data, inspvax_data, bestvel_data, pose_data = parser.parse_insspd()
+        insspd_data, inspvax_data, bestvel_data, pose_data, corrimu_data = parser.parse_insspd()
         self.data = {'insspd': {}, 'inspvax': {}, 'pose': {}}
         self.vehicle_transformer = GPSTransformer()
+        self.corrimu_warp(corrimu_data)
         self.insspd_warp(insspd_data)
         self.pose_warp(pose_data)
         self.inspvax_warp(inspvax_data)
         self.list2array()
         self.plot(info['bag_name'], info['ts_begin'], info['ts_end'])
+
+    def corrimu_warp(self, imu):
+        self.data['corrimu'] = {'yaw_rate': []}
+        for p in imu:
+            self.data['corrimu']['yaw_rate'].append(p.yaw_rate)
 
     def pose_warp(self, pose):
         self.data['pose'] = {'yaw': []}
@@ -32,10 +38,14 @@ class INSAnalyzer:
     def inspvax_warp(self, inspvax):
         lat0, lon0 = 33, -111
         p0 = None
-        self.data['inspvax'] = {'yaw': [], 'yaw_std': [],
-                                'vel': [], 'ext_sol': [], 'local_yaw': []}
+        self.data['inspvax'] = {'yaw': [], 'yaw_std': [], 'pitch': [],
+                                'vel': [], 'ext_sol': [], 'local_yaw': [],
+                                'altitude': []}
         for p in inspvax:
+            self.data['inspvax']['altitude'].append(p.altitude)
             self.data['inspvax']['yaw'].append(p.azimuth)
+            self.data['inspvax']['pitch'].append(p.pitch)
+            
             self.data['inspvax']['vel'].append(
                 np.sqrt(p.north_velocity ** 2 + p.east_velocity ** 2))
             self.data['inspvax']['ext_sol'].append(p.extended_status)
@@ -60,7 +70,7 @@ class INSAnalyzer:
         for item in ['insspd', 'pose', 'inspvax']:
             for k in self.data[item]:
                 self.data[item][k] = np.array(self.data[item][k])
-        self.data['inspvax']['ext_sol'] = self.data['inspvax']['ext_sol'] & 192
+        # self.data['inspvax']['ext_sol'] = self.data['inspvax']['ext_sol'] & 192
 
     def plot(self, bag_name, ts_begin, ts_end):
         # enlarge the font size of figure
@@ -91,12 +101,20 @@ class INSAnalyzer:
         # 192: INS solution convergence flag & Doppler update
         # 64: INS solution convergence
         plt.subplot(413)
+        # yaw diff 
+        # yaw_rate = np.array(self.data['corrimu']['yaw_rate'])
+        # diff_yaw_rate = (yaw_rate[1:] - yaw_rate[:-1])/0.02
+        # plt.plot(diff_yaw_rate, 'r', label='yaw_rate')
+        
+        plt.plot(self.data['inspvax']['pitch'], 'r', label = 'pitch')
         # plt.plot(self.data['inspvax']['yaw_std'], 'r', label='inspvax yaw_std')
-        plt.plot(self.data['inspvax']['ext_sol'], 'r', label='extended_status')
+        # plt.plot(self.data['inspvax']['ext_sol'], 'r', label='extended_status')
         plt.legend(loc='upper left')
 
         plt.subplot(414)
-        plt.plot(self.data['inspvax']['vel'], 'r', label='velocity')
+        # plt.plot(self.data['inspvax']['vel'], 'r', label='velocity')
+        plt.plot(self.data['inspvax']['altitude'], 'r', label='altitude')
+
         plt.legend(loc='upper left')
 
         fig.suptitle(bag_name + ' ' + ts_begin + '~' + ts_end, fontsize=20)
@@ -108,11 +126,12 @@ if __name__ == '__main__':
     # bag_name = '2018-04-09-14-40-14'
     # bag_name = '2018-03-24-17-52-31'
     # bag_name = '2018-04-09-16-08-16'
-    # bag_name = '2018-04-18-10-42-02'
+    bag_name = '2018-04-18-10-42-02'
     # bag_name = '2018-04-09-16-08-16'
-    bag_name = '2018-04-09-14-40-14'
+    # bag_name = '2018-04-09-14-40-14'
+    # bag_name = '2018-04-19-13-30-26'
 
-    ts_begin = '60:00 '
+    ts_begin = '10:00 '
     ts_end = '120:00'
     info = {'bag_name': bag_name, 'ts_begin': ts_begin, 'ts_end': ts_end}
     analyzer = INSAnalyzer(info)
