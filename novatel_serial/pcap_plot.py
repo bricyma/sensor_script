@@ -14,7 +14,7 @@ for timestamp, buf in pcap:
     ip = eth.data
     tcp = ip.data
     try:
-        if ip.len == 124:  # inspvax: 210; inspvas: 124
+        if ip.len == 210:  # inspvax: 210; inspvas: 124
             capture_timestamp.append(timestamp)
     except:
         pass
@@ -22,8 +22,12 @@ capture_timestamp = np.array(capture_timestamp)
 
 interval = capture_timestamp[1:] - capture_timestamp[:-1]
 
-
+font = {'family': 'normal', 'weight': 'bold', 'size': 30}
+plt.rc('font', **font)
 # plt.plot(interval, 'r', label='inspvax interval')
-plt.plot(interval, 'r', label='inspvas interval')
+plt.plot(interval, 'r', label='inspvax interval')
+plt.xlabel('stamp')
+plt.ylabel('time(s)')
+
 plt.legend(loc='upper left')
 plt.show()
