@@ -51,3 +51,16 @@ class DataParser:
             inspvax_data.append(inspvax)
         return rtkpos_data, inspvax_data
 
+
+    def parse_all(self):
+        ds = Dataset.open(self.bag_name)
+        corrimu_data, bestpos_data, spd_data, ins_data = [], [], [], []
+        for (ts, corrimu), (ts, bestpos), (ts, insspd), (ts, inspvax) in ds.fetch_aligned('/novatel_data/corrimudata', 
+                                    '/novatel_data/bestpos', '/novatel_data/insspd', '/novatel_data/inspvax',
+                                    ts_begin=self.ts_begin, ts_end=self.ts_end):
+            corrimu_data.append(corrimu)
+            bestpos_data.append(bestpos)
+            spd_data.append(insspd)
+            ins_data.append(inspvax)
+        return corrimu_data, bestpos_data, spd_data, ins_data
+
