@@ -12,15 +12,20 @@ base_lat = 32.75707  # center between tucson and phoenix
 base_lon = -111.55757
 
 
-class ErrorAnalyzer:
-    def __init__(self, info):
+class GNSSAnalyzer:
+    def __init__(self, info, flag):
         parser = DataParser(info)
         self.file_name = info['bag_name']
         self.ts_begin = info['ts_begin']
         self.ts_end = info['ts_end']
 
         # get bestpos, insspd, inspvax from dataset
+
         corrimu_data, bestpos_data, spd_data, ins_data = parser.parse_all()
+
+        corrimu_data1, bestpos_data1, spd_data1, ins_data1, corrimu_data2, bestpos_data2, spd_data2, ins_data2 = parser.parse_dual()
+
+
         self.ori_data = {'corrimu': corrimu_data,
                          'bestpos': bestpos_data, 'ins': ins_data, 'spd': spd_data}
         corrimu = {'t': [], 'x_acc': [], 'y_acc': [], 'z_acc': [],
@@ -33,15 +38,15 @@ class ErrorAnalyzer:
         self.data_warp()
 
         x_offset, y_offset = self.calculate_offset()
-        self.plot_offset(x_offset, y_offset)
-
         yaw_diff = self.yaw_check()
-        self.plot_yaw(yaw_diff)
-
         t_spd_diff, t_ins_diff = self.timestamp_check()
-        self.plot_timestamp(t_spd_diff, t_ins_diff)
 
-        self.plot_imu()
+        plot_enable = True
+        if plot_enable:
+            self.plot_offset(x_offset, y_offset)
+            self.plot_yaw(yaw_diff)
+            self.plot_timestamp(t_spd_diff, t_ins_diff)
+            self.plot_imu()
 
     def data_warp(self):
         # initilize base point
@@ -107,8 +112,8 @@ class ErrorAnalyzer:
         x_offset[x_offset > 2] = 0
         # filter
         y_offset = np.sqrt(abs_offset**2 - x_offset ** 2)
-        y_offset[y_offset > 5] = 3.5
-        y_offset[y_offset < 2.5] = 3.5
+        y_offset[y_offset > 5] = 2.8
+        y_offset[y_offset < 2.5] = 2.8
 
         print 'mean of x offset: ', np.mean(x_offset)
         print 'mean of y offset: ', np.mean(y_offset)
@@ -186,6 +191,7 @@ class ErrorAnalyzer:
         plt.legend(loc='upper left')
         plt.show()
 
+
     def plot_timestamp(self, t_spd_diff, t_ins_diff):
         plt.plot(t_ins_diff, 'r', label='inspvax timestamp space')
         plt.plot(t_spd_diff, 'b', label='insspd timestamp space')
@@ -194,6 +200,8 @@ class ErrorAnalyzer:
 
 
 if __name__ == '__main__':
+    # bag_name = '2018-04-09-16-08-16'
+ 
     # B2 outer imu
     # bag_name = '2018-05-04-14-42-06'
     # bag_name = '2018-04-30-16-49-43'
@@ -204,9 +212,13 @@ if __name__ == '__main__':
     # bag_name = '2018-05-10-12-14-54'
     # bag_name = '2018-05-09-18-52-08'
     # bag_name = '2018-05-09-17-25-34'
-    bag_name = '2018-05-10-14-45-41'
-    
+    # bag_name = '2018-05-10-14-45-41'
+    # bag_name = '2018-05-10-17-16-22'
+    bag_name = '2018-05-10-18-21-11'
+    # bag_name = '2018-05-11-11-39-31'
     ts_begin = '0:59'
     ts_end = '100:01'
     info = {'bag_name': bag_name, 'ts_begin': ts_begin, 'ts_end': ts_end}
-    analyzer = ErrorAnalyzer(info)
+    analyzer = GNSSAnalyzer(info, 1)
+
+ 
