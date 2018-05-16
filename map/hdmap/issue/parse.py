@@ -73,7 +73,7 @@ class DataParser:
         corrimu_data1, bestpos_data1, spd_data1, ins_data1 = [], [], [], []
         corrimu_data2, bestpos_data2, spd_data2, ins_data2 = [], [], [], []
         for (ts, corrimu1), (ts, bestpos1), (ts, insspd1), (ts, inspvax1), (ts, corrimu2), (ts, bestpos2), (ts, insspd2), (ts, inspvax2), \
-             in ds.fetch_aligned('/novatel_inner/novatel_data/corrimudata', '/novatel_inner/novatel_data/bestpos', '/novatel_data/insspd', '/novatel_inner/novatel_data/inspvax', \
+             in ds.fetch_aligned('/novatel_inner/novatel_data/corrimudata', '/novatel_inner/novatel_data/bestpos', '/novatel_inner/novatel_data/insspd', '/novatel_inner/novatel_data/inspvax', \
                 '/novatel_data/corrimudata', '/novatel_data/bestpos', '/novatel_data/insspd', '/novatel_data/inspvax', \
                                                                                           ts_begin=self.ts_begin, ts_end=self.ts_end):
             corrimu_data1.append(corrimu1)

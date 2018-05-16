@@ -21,25 +21,20 @@ class IMUAnalyzer:
 
         # get bestpos, insspd, inspvax from dataset
 
-        # corrimu_data, bestpos_data, spd_data, ins_data = parser.parse_all()
-
-        corrimu_data1, bestpos_data1, spd_data1, ins_data1, corrimu_data2, bestpos_data2, spd_data2, ins_data2 = parser.parse_dual()
-        
-        #  ros message data
-        imu1 = {'corrimu': corrimu_data1, 'bestpos': bestpos_data1, 'ins': ins_data1, 'spd': spd_data1}
-        imu2 = {'corrimu': corrimu_data2, 'bestpos': bestpos_data2, 'ins': ins_data2, 'spd': spd_data2}
+        #  get ros message data
+        try:
+            corrimu_data1, bestpos_data1, spd_data1, ins_data1, corrimu_data2, bestpos_data2, spd_data2, ins_data2 = parser.parse_dual()
+            imu1 = {'corrimu': corrimu_data1, 'bestpos': bestpos_data1, 'ins': ins_data1, 'spd': spd_data1}
+            imu2 = {'corrimu': corrimu_data2, 'bestpos': bestpos_data2, 'ins': ins_data2, 'spd': spd_data2}    
+        except:
+            corrimu_data1, bestpos_data1, spd_data1, ins_data1 = parser.parse_all()
+            imu1 = {'corrimu': corrimu_data1, 'bestpos': bestpos_data1, 'ins': ins_data1, 'spd': spd_data1}
+            imu2 = imu1
 
         self.data1 = self.data_warp(imu1)
         self.data2 = self.data_warp(imu2)
         self.imu_pos_offset()
         self.analysis()
-
-        # plot_enable = False
-        # if plot_enable:
-        #     self.plot_offset(x_offset, y_offset)
-        #     self.plot_yaw(yaw_diff)
-        #     self.plot_timestamp(t_spd_diff, t_ins_diff)
-        #     self.plot_imu()
     
     def analysis(self):
         items = ['x_acc', 'y_acc', 'z_acc', 'pitch_rate', 'roll_rate', 'yaw_rate']
@@ -67,9 +62,9 @@ class IMUAnalyzer:
         ins = {'pitch': [], 'roll': [], 'x': [], 'y': [], 'yaw': [], 't': [], 'lat_std': [], 'lon_std': [], 'status': []}
         spd = {'yaw': [], 't': []}
         data = {'corrimu': corrimu, 'bestpos': bestpos, 'ins': ins, 'spd': spd, 'offset': offset}
-        # initilize base point
+        # initilize base point, the middle point between start and end point
         transformer = gps_transformer()
-        base_lat, base_lon = imu['ins'][0].latitude, imu['ins'][0].longitude
+        base_lat, base_lon = 0.5  * (imu['ins'][0].latitude + imu['ins'][-1].latitude), 0.5 * (imu['ins'][0].longitude + imu['ins'][-1].longitude)
         data_rate = 125 # IMU-IGM-S1
         for msg in imu['corrimu']:
             pc_time = float(str(msg.header2.stamp.secs)) \
@@ -93,7 +88,7 @@ class IMUAnalyzer:
             pc_time = float(str(msg.header2.stamp.secs)) \
                 + float(str(msg.header2.stamp.nsecs)) * \
                 1e-9  # epoch second
-            x, y = transformer.llh2enu_1(
+            x, y = transformer.llh2enu_2(
                 msg.latitude, msg.longitude, 0, base_lat, base_lon, 0)
             data['bestpos']['x'].append(x)
             data['bestpos']['y'].append(y)
@@ -102,7 +97,7 @@ class IMUAnalyzer:
             pc_time = float(str(msg.header2.stamp.secs)) \
                 + float(str(msg.header2.stamp.nsecs)) * \
                 1e-9  # epoch second
-            x, y = transformer.llh2enu_1(
+            x, y = transformer.llh2enu_2(
                 msg.latitude, msg.longitude, 0, base_lat, base_lon, 0)
             data['ins']['x'].append(x)
             data['ins']['y'].append(y)
@@ -114,7 +109,6 @@ class IMUAnalyzer:
             data['ins']['lat_std'].append(msg.latitude_std)
             data['ins']['lon_std'].append(msg.longitude_std)
             data['ins']['status'].append(msg.position_type)
-
         # list to numpy array
         for topic in data:
             for item in data[topic]:
@@ -150,7 +144,7 @@ class IMUAnalyzer:
         x1, y1 = self.data1['ins']['x'], self.data1['ins']['y']
         x2, y2 = self.data2['ins']['x'], self.data2['ins']['y']
         abs_offset = np.sqrt((x1 - x2)**2 + (y1 - y2)**2)
-        k = np.tan(np.deg2rad(90 - self.data1['spd']['yaw']))
+        k = np.tan(np.deg2rad(90 - self.data1['ins']['yaw']))
         A = k
         B = -1
         C1 = -k * x1 + y1
