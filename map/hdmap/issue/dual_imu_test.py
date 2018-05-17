@@ -6,7 +6,7 @@ import sys
 from imu_benchmark import IMUAnalyzer
  
 # B2 outer imu
-# bag_name = '2018-05-04-14-42-06'
+bag_name = '2018-05-04-14-42-06'
 # bag_name = '2018-04-30-16-49-43'
 # bag_name = '2018-05-08-16-48-29'
 # bag_name = '2018-05-08-16-48-29'
@@ -17,16 +17,22 @@ from imu_benchmark import IMUAnalyzer
 # bag_name = '2018-05-09-17-25-34'
 # bag_name = '2018-05-10-14-45-41'
 # bag_name = '2018-05-10-17-16-22'
-# bag_name = '2018-05-10-18-21-11'
+bag_name = '2018-05-10-18-21-11'
 # bag_name = '/mnt/truenas/scratch/zhibei/b2_data_imu/2018-05-11-11-58-22'
 # bag_name = '2018-05-11-11-08-22'
 # bag_name = '2018-05-11-11-39-31'  # b1
 # bag_name = '2018-05-14-11-02-11'
 # bag_name = '2018-05-14-17-53-58'
 # bag_name = '2018-05-14-18-25-21'
-bag_name = '2018-05-15-19-05-16'
-ts_begin = '10:00'
-ts_end = '50:01'
+# bag_name = '2018-05-15-19-05-16'
+# bag_name = '2018-05-16-10-54-03'
+# bag_name = '2018-04-09-14-40-14'
+# bag_name = '2018-04-06-11-39-06'
+# bag_name = '2018-04-04-14-30-09'
+# bag_name = '2018-04-10-10-48-30'
+# bag_name = '2018-04-11-14-38-05'
+ts_begin = '15:00'
+ts_end = '40:01'
 info = {'bag_name': bag_name, 'ts_begin': ts_begin, 'ts_end': ts_end}
 analyzer = IMUAnalyzer(info, 1)
 
@@ -81,8 +87,18 @@ plt.legend(loc='upper left')
 plt.xlabel('stamp')
 plt.ylabel('rad/s')
 plt.subplot(313)
-plt.plot(data2['corrimu']['yaw_rate'], 'b', label = 'yaw_rate in outer imu')
-plt.plot(data1['corrimu']['yaw_rate'], 'r', linewidth =1, label = 'yaw_rate in inner imu')
+# plt.plot(data2['corrimu']['yaw_rate'], 'b', label = 'yaw_rate in outer imu')
+# plt.plot(data1['corrimu']['yaw_rate'], 'r', linewidth =1, label = 'yaw_rate in inner imu')
+
+diff1 = data1['corrimu']['yaw_rate'][1:] - data1['corrimu']['yaw_rate'][:-1]
+diff2 = data2['corrimu']['yaw_rate'][1:] - data2['corrimu']['yaw_rate'][:-1]
+
+print 'std of yaw rate diff: ',  np.std(diff1), np.std(diff2)
+
+plt.plot(diff2, 'b', label = 'yaw_rate change in outer imu')
+plt.plot(diff1, 'r', linewidth =1, label = 'yaw_rate change in inner imu')
+
+
 
 plt.xlabel('stamp')
 plt.ylabel('m/s2')
@@ -194,18 +210,27 @@ plt.xlabel('stamp')
 plt.ylabel('m')
 plt.legend(loc='upper left')
 plt.subplot(212)
-plt.plot(data1['ins']['lon_std'], 'r', label = 'inner imu lat std')
-plt.plot(data2['ins']['lon_std'], 'b', label = 'outer imu lat std')
+plt.plot(data1['ins']['lon_std'], 'r', label = 'inner imu lon std')
+plt.plot(data2['ins']['lon_std'], 'b', label = 'outer imu lon std')
 plt.xlabel('stamp')
 plt.ylabel('m')
 plt.legend(loc='upper left')
 plt.show()
 
+# inspvax position status
 fig = plt.figure(8)
 fig.suptitle('Position Status', fontsize=30)
-plt.plot(data1['ins']['status'], 'r', label = 'inner imu position status')
-plt.plot(data2['ins']['status'], 'b', label = 'outer imu position status')
+plt.subplot(311)
+plt.plot(data1['ins']['status'], 'r', label = 'inspvax position status')
+plt.plot(data1['bestpos']['status'], 'b', label = 'bestpos position status')
 plt.xlabel('stamp')
+plt.legend(loc='upper left')
+plt.subplot(312)
+plt.plot(data1['bestpos']['diff_age'], 'r', label='diff age')
+plt.plot(data1['bestpos']['sol_age'], 'b', label='sol age')
+plt.legend(loc='upper left')
+plt.subplot(313)
+plt.plot(data1['ins']['lat_std'], 'r', label = 'inner imu lat std')
 plt.legend(loc='upper left')
 plt.show()
 
@@ -227,3 +252,5 @@ plt.xlabel('stamp')
 plt.ylabel('deg')
 plt.legend(loc='upper left')
 plt.show()
+
+

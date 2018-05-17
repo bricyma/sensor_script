@@ -58,7 +58,7 @@ class IMUAnalyzer:
         offset = {'x': [], 'y': []}
         corrimu = {'t': [], 'x_acc': [], 'y_acc': [], 'z_acc': [],
                    'pitch_rate': [], 'roll_rate': [], 'yaw_rate': []}
-        bestpos = {'x': [], 'y': [], 't': []}
+        bestpos = {'x': [], 'y': [], 't': [], 'diff_age': [], 'status': [], 'sol_age': []}
         ins = {'pitch': [], 'roll': [], 'x': [], 'y': [], 'yaw': [], 't': [], 'lat_std': [], 'lon_std': [], 'status': []}
         spd = {'yaw': [], 't': []}
         data = {'corrimu': corrimu, 'bestpos': bestpos, 'ins': ins, 'spd': spd, 'offset': offset}
@@ -93,6 +93,9 @@ class IMUAnalyzer:
             data['bestpos']['x'].append(x)
             data['bestpos']['y'].append(y)
             data['bestpos']['t'].append(pc_time)
+            data['bestpos']['diff_age'].append(msg.diff_age)
+            data['bestpos']['sol_age'].append(msg.sol_age)
+            data['bestpos']['status'].append(msg.position_type)
         for msg in imu['ins']:
             pc_time = float(str(msg.header2.stamp.secs)) \
                 + float(str(msg.header2.stamp.nsecs)) * \

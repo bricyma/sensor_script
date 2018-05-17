@@ -85,3 +85,12 @@ class DataParser:
             spd_data2.append(insspd2)
             ins_data2.append(inspvax2)
         return corrimu_data1, bestpos_data1, spd_data1, ins_data1, corrimu_data2, bestpos_data2, spd_data2, ins_data2
+
+    # parse pandar packet
+    def parse_pandar(self):
+        ds = Dataset.open(self.bag_name)
+        pandar_left, pandar_right = [], []
+        for (ts, left), (ts, right) in ds.fetch_aligned('/lidar_left/pandar_packets', '/lidar_right/pandar_packets', ts_begin = self.ts_begin, ts_end = self.ts_end):
+            pandar_left.append(left)
+            pandar_right.append(right)
+        return pandar_left, pandar_right          
