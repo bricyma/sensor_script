@@ -6,7 +6,7 @@ import sys
 from imu_benchmark import IMUAnalyzer
  
 # B2 outer imu
-bag_name = '2018-05-04-14-42-06'
+# bag_name = '2018-05-04-14-42-06'
 # bag_name = '2018-04-30-16-49-43'
 # bag_name = '2018-05-08-16-48-29'
 # bag_name = '2018-05-08-16-48-29'
@@ -17,7 +17,7 @@ bag_name = '2018-05-04-14-42-06'
 # bag_name = '2018-05-09-17-25-34'
 # bag_name = '2018-05-10-14-45-41'
 # bag_name = '2018-05-10-17-16-22'
-bag_name = '2018-05-10-18-21-11'
+# bag_name = '2018-05-10-18-21-11'
 # bag_name = '/mnt/truenas/scratch/zhibei/b2_data_imu/2018-05-11-11-58-22'
 # bag_name = '2018-05-11-11-08-22'
 # bag_name = '2018-05-11-11-39-31'  # b1
@@ -30,9 +30,13 @@ bag_name = '2018-05-10-18-21-11'
 # bag_name = '2018-04-06-11-39-06'
 # bag_name = '2018-04-04-14-30-09'
 # bag_name = '2018-04-10-10-48-30'
-# bag_name = '2018-04-11-14-38-05'
+# bag_name = '2018-05-16-13-02-16'
+bag_name = '2018-05-16-14-38-07'
+# bag_name = '2018-05-16-15-43-19'
+# bag_name = '2018-05-16-10-54-03'
+bag_name = '2018-05-17-11-57-48'
 ts_begin = '15:00'
-ts_end = '40:01'
+ts_end = '100:01'
 info = {'bag_name': bag_name, 'ts_begin': ts_begin, 'ts_end': ts_end}
 analyzer = IMUAnalyzer(info, 1)
 
@@ -146,59 +150,41 @@ plt.legend(loc='upper left')
 plt.show()
 
 
-# yaw, insspd
 fig = plt.figure(5)
-fig.suptitle('Yaw from INSSPD', fontsize=30)
-plt.subplot(411)
-plt.plot(data1['spd']['yaw'], 'r', label = 'inner INSSPD yaw')
-plt.plot(data2['spd']['yaw'], 'b', label = 'outer INSSPD yaw')
-plt.xlabel('stamp')
-plt.ylabel('deg')
+fig.suptitle('Leverarm', fontsize=30)
+plt.subplot(211)
+plt.plot(data1['pos']['x'], 'r', label = 'pos offset x between inspvax and lane center')
+plt.plot(data1['pos']['y'], 'b', label = 'pos offset y between inspvax and lane center')
 plt.legend(loc='upper left')
-
-plt.subplot(412)
-plt.plot(data1['ins']['yaw'], 'r', label = 'inner inspvax yaw')
-plt.plot(data2['ins']['yaw'], 'b', label = 'outer inspvax yaw')
-plt.xlabel('stamp')
-plt.ylabel('deg')
-plt.legend(loc='upper left')
-
-plt.subplot(413)
-diff = data1['ins']['yaw'] - data2['ins']['yaw']
-plt.plot(diff, 'r' , label = 'inner imu yaw - outer imu yaw')
-plt.xlabel('stamp')
-plt.ylabel('deg')
-plt.legend(loc='upper left')
-plt.subplot(414)
-diff = data1['spd']['yaw'] - data2['spd']['yaw']
-plt.plot(diff, 'r' , label = 'inner imu yaw - outer imu yaw')
-plt.xlabel('stamp')
-plt.ylabel('deg')
-plt.legend(loc='upper left')
-
 plt.show()
 
 # leverarm result
-# inner: -1.137, 2.78
+# inner: -1.037, 2.78
 # outer: -0.89, 3.4
 
 # actual: 1.038, 2.76
 # 0.838, 3.31
 fig = plt.figure(6)
 fig.suptitle('Leverarm', fontsize=30)
-plt.subplot(211)
-plt.plot(data1['offset']['x'], 'r', label = 'inner offset x')
-plt.plot(data1['offset']['y'], 'b', label = 'inner offset y')
+plt.subplot(311)
+plt.plot(data1['offset']['x'], 'r', label = 'leverarm offset x')
+plt.plot(data1['offset']['y'], 'b', label = 'leverarm offset y')
 plt.xlabel('stamp')
 plt.ylabel('m')
 plt.legend(loc='upper left')
-plt.subplot(212)
-plt.plot(data2['offset']['x'], 'r', label = 'outer offset x')
-plt.plot(data2['offset']['y'], 'b', label = 'outer offset y')
+plt.subplot(312)
+plt.plot(data1['ins']['yaw'], 'r', label = 'ins yaw')
+plt.xlabel('stamp')
+plt.ylabel('deg')
+plt.legend(loc='upper left')
+plt.subplot(313)
+plt.plot(data1['ins']['roll'], 'r', label = 'ins roll')
 plt.xlabel('stamp')
 plt.ylabel('deg')
 plt.legend(loc='upper left')
 plt.show()
+
+
 
 # lat, lon std
 fig = plt.figure(7)
