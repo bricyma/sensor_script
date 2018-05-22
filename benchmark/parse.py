@@ -94,3 +94,12 @@ class DataParser:
             pandar_left.append(left)
             pandar_right.append(right)
         return pandar_left, pandar_right          
+
+    # parse vehiclebodyrotation 
+    def parse_rotation(self):
+        ds = Dataset.open(self.bag_name)
+        ins_data, rvb_data = []
+        for (ts, rvb), (ts, ins) in ds.fetch_aligned('/novatel_data/vehiclebodyrotation', '/novatel_data/inspvax', ts_begin = self.ts_begin, ts_end = self.ts_end):
+            rvb_data.append(rvb)
+            ins_data.append(ins)
+        return ins_data, rvb_data    
