@@ -175,34 +175,38 @@ class IMUAnalyzer:
             x2.append(ref_p.x)
             y2.append(ref_p.y)
             xy.append([ref_p.x, ref_p.y])
-            data['map']['x'].append(ref_p.x)
-            data['map']['y'].append(ref_p.y)
-        
+
+        # get the distance between lane center and bestpos
+        x2, y2 = np.array(x2), np.array(y2)
+        x_offset, y_offset = self.get_distance(
+            x1, y1, x2, y2, data['ins']['yaw'])
+
+        # yaw angle of map's lane        
         xy = np.array(xy)
         ll = self.octopus_gnss_trans.xy2latlon(xy)
-        # ll = self.wiki_gnss_trans.latlon2xy(ll)
+        # wiki_xy = self.wiki_gnss_trans.latlon2xy(ll)
 
         for i in range(len(ll)-1):
             lat, lon = ll[i][0], ll[i][1]
             lat2, lon2 = ll[i+1][0], ll[i+1][1]
             self.wiki_gnss_trans.set_base(lat, lon)
+            enu_pt_0 = self.wiki_gnss_trans.latlon2xy(np.array([lat, lon]))
             enu_pt = self.wiki_gnss_trans.latlon2xy(np.array([lat2, lon2]))
+            enu_pt = enu_pt - enu_pt_0
             delta_x, delta_y = enu_pt[0], enu_pt[1]
             data['map']['yaw'].append(np.rad2deg(np.arctan2(delta_x, delta_y)))
 
-        x2, y2 = np.array(x2), np.array(y2)
-        x_offset, y_offset = self.get_distance(
-            x1, y1, x2, y2, data['ins']['yaw'])
-
-        data['map']['x'], data['map']['y'] = np.array(
-            data['map']['x']), np.array(data['map']['y'])
+        # for xy in wiki_xy:
+        #     data['map']['x'].append(xy[0])
+        #     data['map']['y'].append(xy[1])
+        # data['map']['x'] = np.array(data['map']['x'])
+        # data['map']['y'] = np.array(data['map']['y'])
         # data['map']['yaw'] = np.rad2deg(np.arctan2(
-            # data['map']['x'][1:] - data['map']['x'][:-1], data['map']['y'][1:] - data['map']['y'][:-1])) 
+        #     data['map']['x'][1:] - data['map']['x'][:-1], data['map']['y'][1:] - data['map']['y'][:-1])) 
+
         for i in range(len(data['map']['yaw'])-1):
-            if abs(data['map']['yaw'][i]) < 0.1:
-                # print 'before', data['map']['yaw'][i]
+            if abs(data['map']['yaw'][i]) == 0:
                 data['map']['yaw'][i] = min(data['map']['yaw'][i-1], data['map']['yaw'][i+1])
-                # print data['map']['yaw'][i]
         
 
         data['map']['yaw'] = np.append(

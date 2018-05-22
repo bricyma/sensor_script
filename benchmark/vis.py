@@ -185,11 +185,25 @@ plt.legend(loc='upper left')
 
 fig = plt.figure(10)
 fig.suptitle('INS yaw vs SPD yaw vs HDmap yaw')
+plt.subplot(211)
 plt.plot(data1['ins']['yaw'], 'r', label = 'ins  yaw')
 plt.plot(data1['spd']['yaw'], 'b', label = 'spd  yaw')
 plt.plot(data1['map']['yaw'], 'g', label = 'hdmap  yaw')
 plt.xlabel('stamp')
 plt.ylabel('deg')
 plt.legend(loc='upper left')
+plt.subplot(212)
+diff_ins = data1['ins']['yaw'] - data1['map']['yaw']
+diff_spd = data1['spd']['yaw'] - data1['map']['yaw']
+diff_ins[abs(diff_ins)>1] = 0
+diff_spd[abs(diff_spd)>1] = 0
+plt.plot(diff_ins, 'r', label = 'ins - map')
+plt.plot(diff_spd, 'b', label = 'spd - map')
+plt.xlabel('stamp')
+plt.ylabel('deg')
+plt.legend(loc='upper left')
+
+print 'average of (ins -map): ', format(np.mean(diff_ins), '.4f')
+print 'average of (spd -map): ', format(np.mean(diff_spd), '.4f')
 
 plt.show()
