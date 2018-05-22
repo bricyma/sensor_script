@@ -196,6 +196,7 @@ class IMUAnalyzer:
             delta_x, delta_y = enu_pt[0], enu_pt[1]
             data['map']['yaw'].append(np.rad2deg(np.arctan2(delta_x, delta_y)))
 
+        # one base, llh2enu
         # for xy in wiki_xy:
         #     data['map']['x'].append(xy[0])
         #     data['map']['y'].append(xy[1])

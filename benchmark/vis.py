@@ -10,8 +10,14 @@ bag_name = '2018-05-17-10-50-21'
 # bag_name = '2018-05-16-14-38-07'
 
 # bag_name = '2018-05-16-10-54-03'
+
+# human driving
+bag_name = '2018-05-21-11-17-12'
+# bag_name = '2018-05-21-16-15-06'
+bag_name = '2018-05-21-17-40-08'
 # B1
 # bag_name = '2018-05-18-11-29-26'
+# bag_name = '2018-05-21-10-49-42'
 ts_begin = '0:00'
 ts_end = '100:01'
 info = {'bag_name': bag_name, 'ts_begin': ts_begin, 'ts_end': ts_end}
@@ -94,7 +100,8 @@ plt.ylabel('deg')
 plt.legend(loc='upper left')
 plt.subplot(212)
 diff = data1['ins']['yaw'] - data1['spd']['yaw']
-print 'mean of (ins yaw - spd yaw): ', format(np.mean(diff), '.3f')
+diff[abs(diff) > 0.5] = 0
+print 'mean of (ins yaw - spd yaw): ', format(np.mean(diff), '.6f')
 plt.plot(diff, 'r', label = 'inspvax - insspd')
 plt.xlabel('stamp')
 plt.ylabel('deg')
