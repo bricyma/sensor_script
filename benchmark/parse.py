@@ -98,7 +98,7 @@ class DataParser:
     # parse vehiclebodyrotation 
     def parse_rotation(self):
         ds = Dataset.open(self.bag_name)
-        ins_data, rvb_data = []
+        ins_data, rvb_data = [], []
         for (ts, rvb), (ts, ins) in ds.fetch_aligned('/novatel_data/vehiclebodyrotation', '/novatel_data/inspvax', ts_begin = self.ts_begin, ts_end = self.ts_end):
             rvb_data.append(rvb)
             ins_data.append(ins)

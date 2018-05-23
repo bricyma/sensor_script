@@ -55,7 +55,7 @@ class IMUAnalyzer:
                    'diff_age': [], 'status': [], 'sol_age': []}
         ins = {'lat': [], 'lon': [], 'pitch': [], 'roll': [], 'x': [], 'y': [], 'yaw': [],
                't': [], 't_gps': [], 'lat_std': [], 'lon_std': [], 'status': []}
-        spd = {'yaw': [], 't': []}
+        spd = {'yaw': [], 't': [], 't_gps': []}
         hdmap = {'x': [], 'y': [], 'yaw': []}
         data = {'corrimu': corrimu, 'bestpos': bestpos,
                 'ins': ins, 'spd': spd, 'offset': offset, 'pos': pos, 'map': hdmap}
@@ -80,8 +80,12 @@ class IMUAnalyzer:
             pc_time = float(str(msg.header2.stamp.secs)) \
                 + float(str(msg.header2.stamp.nsecs)) * \
                 1e-9  # epoch second
+            novatel_time = 315964800 + msg.header.gps_week * 7 * 24 * 60 * 60 \
+                + float(msg.header.gps_week_seconds) / \
+                1000 - 18  # GPS time to epoch second
             data['spd']['yaw'].append(msg.track_ground)
             data['spd']['t'].append(pc_time)
+            data['spd']['t_gps'].append(novatel_time)
         for msg in imu['bestpos']:
             pc_time = float(str(msg.header2.stamp.secs)) \
                 + float(str(msg.header2.stamp.nsecs)) * \

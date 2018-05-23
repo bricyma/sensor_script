@@ -9,15 +9,20 @@ from gnss_imu_benchmark import IMUAnalyzer
 bag_name = '2018-05-17-10-50-21'
 # bag_name = '2018-05-16-14-38-07'
 
-# bag_name = '2018-05-16-10-54-03'
+bag_name = '2018-05-16-10-54-03'
+# bag_name = '2018-05-07-16-05-02'
+# bag_name = '2018-05-08-14-48-21'
+# bag_name = '2018-05-10-17-16-22'
 
 # human driving
-bag_name = '2018-05-21-11-17-12'
+# bag_name = '2018-05-21-11-17-12'
 # bag_name = '2018-05-21-16-15-06'
-bag_name = '2018-05-21-17-40-08'
+# bag_name = '2018-05-21-17-40-08'
 # B1
 # bag_name = '2018-05-18-11-29-26'
 # bag_name = '2018-05-21-10-49-42'
+# bag_name = '2018-05-22-14-22-23'
+# bag_name = '2018-05-23-10-52-25'
 ts_begin = '0:00'
 ts_end = '100:01'
 info = {'bag_name': bag_name, 'ts_begin': ts_begin, 'ts_end': ts_end}
@@ -213,4 +218,21 @@ plt.legend(loc='upper left')
 print 'average of (ins -map): ', format(np.mean(diff_ins), '.4f')
 print 'average of (spd -map): ', format(np.mean(diff_spd), '.4f')
 
+
+fig = plt.figure(11)
+fig.suptitle('INS timestamp vs SPD timestamp')
+plt.subplot(211)
+plt.plot(data1['ins']['t'], 'r', label = 'ins timestamp')
+plt.plot(data1['spd']['t'], 'b', label = 'spd timestamp')
+plt.legend(loc='upper left')
+plt.xlabel('stamp')
+plt.ylabel('t/s')
+plt.subplot(212)
+diff = data1['ins']['t'] - data1['ins']['t_gps']
+diff2 = data1['ins']['t_gps'] - data1['spd']['t_gps']
+plt.plot(diff, 'r', label = 'ins t - spd t')
+plt.plot(diff2, 'b', label = 'ins t_gps - spd t_gps')
+plt.legend(loc='upper left')
+plt.xlabel('stamp')
+plt.ylabel('t/s')
 plt.show()
