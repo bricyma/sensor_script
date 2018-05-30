@@ -14,8 +14,6 @@ class PosType:
         bagname2 = sys.argv[2]
         self.bag1 = rosbag.Bag(bagname1)
         self.bag2 = rosbag.Bag(bagname2)
-        self.ppppos_x = []
-        self.ppppos_y = []
 
         self.rtkpos_x = []
         self.rtkpos_y = []
@@ -24,25 +22,19 @@ class PosType:
         self.bestpos_y = []
         self.inspos_x = []
         self.inspos_y = []
+        self.inspos_yaw = []
         self.bestpos_time = []
         self.inspos_time = []
         self.distance = []
         self.baseLat = self.DEG2RAD(32.0922419)
         self.baseLon = self.DEG2RAD(-110.7894856)
-
         self.limit = 5000000
+        self.pos1 = {'x':0, 'y':0}
+        self.pos2 = {'x':0, 'y': 0}
+        self.bag1_len = 0
 
     def readbag(self, bag_name):
         count = 0
-        for topic, msg, t in bag_name.read_messages(topics=['/novatel_data/ppppos']):
-            count += 1
-            if count > self.limit:
-                break
-            if msg.header.gps_week_seconds % 100 == 0:
-                x, y = self.latlon2xy(msg.latitude, msg.longitude)
-                self.ppppos_x.append(x)
-                self.ppppos_y.append(y)
-                # self.bestpos_time.append(msg.header.gps_week_seconds)
         cur = 0
         count = 0
         for topic, msg, t in bag_name.read_messages(topics=['/novatel_data/rtkpos']):
@@ -53,7 +45,6 @@ class PosType:
                 x, y = self.latlon2xy(msg.latitude, msg.longitude)
                 self.rtkpos_x.append(x)
                 self.rtkpos_y.append(y)
-                # self.bestpos_time.append(msg.header.gps_week_seconds)
         cur = 0
         count = 0
         for topic, msg, t in bag_name.read_messages(topics=['/novatel_data/bestpos']):
@@ -68,7 +59,6 @@ class PosType:
         cur = 0
         count = 0
         for topic, msg, t in bag_name.read_messages(topics=['/novatel_data/inspvax']):
-            # if cur < len(self.bestpos_time) and msg.header.gps_week_seconds == self.bestpos_time[cur]:
             count += 1
             if count > self.limit * 2.5:
                 break
@@ -76,11 +66,21 @@ class PosType:
                 x, y = self.latlon2xy(msg.latitude, msg.longitude)
                 self.inspos_x.append(x)
                 self.inspos_y.append(y)
+                self.inspos_yaw.append(msg.azimuth)
                 self.inspos_time.append(msg.header.gps_week_seconds)
                 cur += 1
-        # for i in range(0, len(self.bestpos_time)):
-            # if np.sqrt((pos.inspos_x[i] - pos.bestpos_x[i]) ** 2 + (pos.inspos_y[i] - pos.inspos_y[i]) ** 2) < 1:
-            #     self.distance.append(np.sqrt((pos.inspos_x[i] - pos.bestpos_x[i]) ** 2 + (pos.inspos_y[i] - pos.inspos_y[i]) ** 2))
+
+        if self.pos1['x'] == 0:
+            self.pos1['x'], self.pos1['y'] = np.mean(self.bestpos_x), np.mean(self.bestpos_y)
+            self.bag1_len = len(self.bestpos_x)
+        else:
+            bag2_len = len(self.bestpos_x) - self.bag1_len
+            self.pos2['x'] = (sum(self.bestpos_x) - self.pos1['x'] * self.bag1_len) / bag2_len
+            self.pos2['y'] = (sum(self.bestpos_y) - self.pos1['y'] * self.bag1_len) / bag2_len
+
+            print 'dual antenna heading: ', 90 + np.rad2deg(np.arctan2(self.pos1['x'] - self.pos2['x'], self.pos1['y'] - self.pos2['y']))
+            print 'inspvax yaw: ', np.mean(self.inspos_yaw)
+            print 'leverarm: ', np.sqrt((self.pos1['x'] - self.pos2['x'])**2 + (self.pos1['y'] - self.pos2['y'])**2)
         bag_name.close()
 
     def DEG2RAD(self, x):
@@ -114,12 +114,9 @@ class PosType:
         return tx, ty
 
     def plot(self):
-        # plt.plot(self.bestpos_x, self.bestpos_y, 'r', marker='o', label='bestpos')
+        plt.plot(self.bestpos_x, self.bestpos_y, 'r', marker='o', label='bestpos')
         plt.plot(self.inspos_x, self.inspos_y, 'b', marker='o', label='inspos')
-        # plt.plot(self.ppppos_x, self.ppppos_y, 'g', label='ppppos')
-        plt.plot(self.rtkpos_x, self.rtkpos_y, 'y', label='rtkpos')
-
-        # plt.plot(self.bestpos_x[0], self.bestpos_y[0], color='green', linewidth=100, label='start')
+        # plt.plot(self.rtkpos_x, self.rtkpos_y, 'y', label='rtkpos')
         plt.legend(loc='upper left')
         plt.show()
 
@@ -128,7 +125,4 @@ if __name__ == '__main__':
     pos = PosType()
     pos.readbag(pos.bag1)
     pos.readbag(pos.bag2)
-    print 'real distance: ', np.sqrt(0.329**2 + 0.58**2)
-    print np.mean(pos.distance)
-    print len(pos.bestpos_x), len(pos.inspos_x)
     pos.plot()
