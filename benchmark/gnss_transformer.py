@@ -81,34 +81,7 @@ class GPSTransformer:
 
 
 if __name__ == '__main__':
-    base_lat = 32.75707123656  # center between tucson and phoenix
-    base_lon = -111.55757123656
-    cc = GPSTransformer()
-
-    lat = 32.4002113023
-    lon = -111.130179869
-    lat2 = lat - 0.00002
-    lon2 = lon - 0.00002
-    # lat2 = 32.4002047143
-    # lon2 = -111.130170684
-    cc.set_base(lat, lon)
-
-    enu_pt = cc.latlon2xy(np.array([lat, lon]))
-    enu_pt2 = cc.latlon2xy(np.array([lat2, lon2]))
-    enu = (np.array(enu_pt2) - np.array(enu_pt))
-    print enu_pt2 - enu_pt
-    print np.rad2deg(np.arctan2(enu[0], enu[1]))
-
-    cc = GNSSTransformer()
-    cc.set_base(lat, lon)
-    enu_pt = cc.latlon2xy(np.array([lat, lon]))
-    enu_pt2 = cc.latlon2xy(np.array([lat2, lon2]))
-    enu = (np.array(enu_pt2) - np.array(enu_pt))
-    print enu_pt2 - enu_pt
-    print np.rad2deg(np.arctan2(enu[0], enu[1]))
-
     dd = gps_transformer()
     x, y = dd.llh2enu_2(lat, lon, 0, lat, lon, 0)
     x2, y2 = dd.llh2enu_2(lat2, lon2, 0, lat, lon, 0)
-
     print np.rad2deg(np.arctan2(x2 - x, y2 - y))

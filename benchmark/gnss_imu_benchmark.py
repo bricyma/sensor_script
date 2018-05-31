@@ -5,7 +5,6 @@
 from parse import DataParser
 import matplotlib.pyplot as plt
 import numpy as np
-from llh2enu.llh2enu_gps_transformer import *
 from tsmap import TSMap, Lane, Point3d, Bound, latlon2xy
 from transformation_util import GNSSTransformer
 from gnss_transformer import GPSTransformer
@@ -25,6 +24,7 @@ class IMUAnalyzer:
         self.wiki_gnss_trans = GPSTransformer()
         self.octopus_gnss_trans.set_base(self.base_lat, self.base_lon)
         self.wiki_gnss_trans.set_base(self.base_lat, self.base_lon)
+
         # get bestpos, insspd, inspvax from dataset
         # get ros message data
         corrimu_data1, bestpos_data1, spd_data1, ins_data1 = parser.parse_all()
@@ -59,10 +59,7 @@ class IMUAnalyzer:
         hdmap = {'x': [], 'y': [], 'yaw': []}
         data = {'corrimu': corrimu, 'bestpos': bestpos,
                 'ins': ins, 'spd': spd, 'offset': offset, 'pos': pos, 'map': hdmap}
-        # initilize base point, the middle point between start and end point
-        transformer = gps_transformer()
-        # self.base_lat, self.base_lon = 0.5 * (imu['ins'][0].latitude + imu['ins'][-1].latitude), 0.5 * (
-        # imu['ins'][0].longitude + imu['ins'][-1].longitude)
+        
         data_rate = 125  # IMU-IGM-S1
         for msg in imu['corrimu']:
             pc_time = float(str(msg.header2.stamp.secs)) \
@@ -90,8 +87,8 @@ class IMUAnalyzer:
             pc_time = float(str(msg.header2.stamp.secs)) \
                 + float(str(msg.header2.stamp.nsecs)) * \
                 1e-9  # epoch second
-            x, y = transformer.llh2enu_5(
-                msg.latitude, msg.longitude, 0, self.base_lat, self.base_lon, 0)
+            enu_pt = self.octopus_gnss_trans.latlon2xy(np.array([msg.latitude, msg.longitude]))
+            x, y = enu_pt[0], enu_pt[1]
             data['bestpos']['x'].append(x)
             data['bestpos']['y'].append(y)
             data['bestpos']['t'].append(pc_time)
@@ -105,8 +102,8 @@ class IMUAnalyzer:
             novatel_time = 315964800 + msg.header.gps_week * 7 * 24 * 60 * 60 \
                 + float(msg.header.gps_week_seconds) / \
                 1000 - 18  # GPS time to epoch second
-            x, y = transformer.llh2enu_5(
-                msg.latitude, msg.longitude, 0, self.base_lat, self.base_lon, 0)
+            enu_pt = self.octopus_gnss_trans.latlon2xy(np.array([msg.latitude, msg.longitude]))
+            x, y = enu_pt[0], enu_pt[1]
             data['ins']['x'].append(x)
             data['ins']['y'].append(y)
             data['ins']['lat'].append(msg.latitude)
@@ -125,7 +122,8 @@ class IMUAnalyzer:
                 if topic is not 'map':
                     data[topic][item] = np.array(data[topic][item])
 
-        # find data between (32.146004, -110.893713) to (32.246111, -110.990079)
+        # get data in the chosen route
+        # find data between start: (32.146004, -110.893713) to end: (32.246111, -110.990079)
         # Tucson => Phoneix
         start_lat, start_lon = 32.146004, -110.893713
         end_lat, end_lon = 32.246111, -110.990079
@@ -185,14 +183,14 @@ class IMUAnalyzer:
         x_offset, y_offset = self.get_distance(
             x1, y1, x2, y2, data['ins']['yaw'])
 
-        # yaw angle of map's lane        
+        # yaw angle of map's lane
         xy = np.array(xy)
         ll = self.octopus_gnss_trans.xy2latlon(xy)
         # wiki_xy = self.wiki_gnss_trans.latlon2xy(ll)
 
-        for i in range(len(ll)-1):
+        for i in range(len(ll) - 1):
             lat, lon = ll[i][0], ll[i][1]
-            lat2, lon2 = ll[i+1][0], ll[i+1][1]
+            lat2, lon2 = ll[i + 1][0], ll[i + 1][1]
             self.wiki_gnss_trans.set_base(lat, lon)
             enu_pt_0 = self.wiki_gnss_trans.latlon2xy(np.array([lat, lon]))
             enu_pt = self.wiki_gnss_trans.latlon2xy(np.array([lat2, lon2]))
@@ -207,12 +205,12 @@ class IMUAnalyzer:
         # data['map']['x'] = np.array(data['map']['x'])
         # data['map']['y'] = np.array(data['map']['y'])
         # data['map']['yaw'] = np.rad2deg(np.arctan2(
-        #     data['map']['x'][1:] - data['map']['x'][:-1], data['map']['y'][1:] - data['map']['y'][:-1])) 
+        #     data['map']['x'][1:] - data['map']['x'][:-1], data['map']['y'][1:] - data['map']['y'][:-1]))
 
-        for i in range(len(data['map']['yaw'])-1):
+        for i in range(len(data['map']['yaw']) - 1):
             if abs(data['map']['yaw'][i]) == 0:
-                data['map']['yaw'][i] = min(data['map']['yaw'][i-1], data['map']['yaw'][i+1])
-        
+                data['map']['yaw'][i] = min(
+                    data['map']['yaw'][i - 1], data['map']['yaw'][i + 1])
 
         data['map']['yaw'] = np.append(
             data['map']['yaw'], data['map']['yaw'][-1])
@@ -236,7 +234,6 @@ class IMUAnalyzer:
 
 if __name__ == '__main__':
     bag_name = '2018-05-16-15-43-19'
-
     ts_begin = '0:59'
     ts_end = '100:01'
     info = {'bag_name': bag_name, 'ts_begin': ts_begin, 'ts_end': ts_end}
