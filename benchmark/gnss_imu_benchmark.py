@@ -35,14 +35,23 @@ class IMUAnalyzer:
         self.analysis()
 
     def analysis(self):
+        print '******BENCHMARK*********'
         items = ['x_acc', 'y_acc', 'z_acc',
                  'pitch_rate', 'roll_rate', 'yaw_rate']
         for item in items:
             print 'std of ' + item, format(np.std(self.data1['corrimu'][item]), '.3f')
+            print 'mean of ' + item, format(np.mean(self.data1['corrimu'][item]), '.3f')
+        
+        orientation = ['pitch', 'roll', 'yaw']
+        for item in orientation:
+            print 'std of ' + item, format(np.std(self.data1['ins'][item]), '.3f')
+            print 'mean of ' + item, format(np.mean(self.data1['ins'][item]), '.3f')
+       
+        print '*******LEVERARM CALIBRATION********'
         print 'mean of x offset: ', format(np.mean(self.data1['offset']['x']), '.4f')
         print 'mean of y offset: ', format(np.mean(self.data1['offset']['y']), '.3f')
-        print 'std of pitch', format(np.std(self.data1['ins']['pitch']), '.3f')
-        print 'std of roll', format(np.std(self.data1['ins']['roll']), '.3f')
+        
+        print '*******POSITION OFFSET*********'
         print 'mean of pos x offset: ', format(np.mean(self.data1['pos']['x']), '.4f')
         print 'mean of pos y offset: ', format(np.mean(self.data1['pos']['y']), '.3f')
 
@@ -122,7 +131,7 @@ class IMUAnalyzer:
                 if topic is not 'map':
                     data[topic][item] = np.array(data[topic][item])
 
-        # get data in the chosen route
+        # Obtain data in the chosen route
         # find data between start: (32.146004, -110.893713) to end: (32.246111, -110.990079)
         # Tucson => Phoneix
         start_lat, start_lon = 32.146004, -110.893713
@@ -149,10 +158,8 @@ class IMUAnalyzer:
     def calculate_offset(self, data):
         x1, y1 = data['bestpos']['x'], data['bestpos']['y']
         x2, y2 = data['ins']['x'], data['ins']['y']
-
         x_offset, y_offset = self.get_distance(
             x1, y1, x2, y2, data['ins']['yaw'])
-
         x_offset[x_offset > 2] = 0
         y_mean = np.mean(y_offset)
         return x_offset, y_offset
