@@ -58,6 +58,10 @@ class IMUAnalyzer:
         print 'mean of pos x offset: ', format(np.mean(self.data1['pos']['x']), '.4f')
         print 'mean of pos y offset: ', format(np.mean(self.data1['pos']['y']), '.3f')
 
+    # check parameter satisfies standard
+    # def check_data():
+
+
     def data_warp(self, imu):
         pos = {'x': [], 'y': []}
         offset = {'x': [], 'y': []}

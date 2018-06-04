@@ -1,4 +1,27 @@
 {
-    "bag_name": "2018-05-30-11-44-13",    
-    "hdmap_file": "I-10_Tucson2Phoenix_20180412.hdmap"
+    "bag_names": "2018-05-30-11-44-13",    
+    "hdmap_file": "I-10_Tucson2Phoenix_20180412.hdmap",
+    "benchmark": {
+    	"std": {
+    		"acc_x":,
+    		"acc_y":,
+    		"acc_z":,
+    		"pitch_rate":,
+    		"roll_rate":,
+    		"yaw_rate":,
+    		"yaw_rate_change":,
+    		"timestamp":
+    	}, 
+    	"mean": {
+    		"acc_x":,
+    		"acc_y":,
+    		"acc_z":,
+    		"pitch_rate":,
+    		"roll_rate":,
+    		"yaw_rate":,
+    		"yaw_rate_change":,
+    		"timestamp":
+    	}
+
+    }
 }
