@@ -4,11 +4,14 @@ import matplotlib.pyplot as plt
 import numpy as np
 import sys
 from gnss_imu_benchmark import IMUAnalyzer
- 
+import json
+
+with open('conf.json') as f:
+    data = json.load(f)
+
 # B2 Standard
 bag_name = '2018-05-17-10-50-21'
 # bag_name = '2018-05-16-14-38-07'
-
 bag_name = '2018-05-16-10-54-03'
 # bag_name = '2018-05-07-16-05-02'
 # bag_name = '2018-05-08-14-48-21'
@@ -26,13 +29,14 @@ bag_name = '2018-05-29-15-53-19'
 # bag_name = '2018-05-24-17-20-23'
 # bag_name = '2018-05-30-11-44-13'
 bag_name = '2018-05-31-11-36-46'
+bag_name = data['bag_name']
+
 ts_begin = '0:00'
 ts_end = '100:01'
 info = {'bag_name': bag_name, 'ts_begin': ts_begin, 'ts_end': ts_end}
-analyzer = IMUAnalyzer(info, 1)
+analyzer = IMUAnalyzer(info)
 
 data1 = analyzer.data1
-
 font = {'family': 'normal',
         'weight': 'bold',
         'size': 20}
@@ -82,7 +86,6 @@ plt.xlabel('stamp')
 plt.ylabel('rad/s/stamp')
 plt.legend(loc='upper left')
 
-
 # timestamp, packet loss
 fig = plt.figure(3)
 fig.suptitle('Timestamp space', fontsize = 30)
@@ -114,14 +117,12 @@ plt.xlabel('stamp')
 plt.ylabel('deg')
 plt.legend(loc='upper left')
 
-
 fig = plt.figure(5)
 fig.suptitle('Vehicle position compared with lane center', fontsize=30)
 plt.subplot(211)
 plt.plot(data1['pos']['x'], 'r', label = 'pos offset x between inspvax and lane center')
 plt.plot(data1['pos']['y'], 'b', label = 'pos offset y between inspvax and lane center')
 plt.legend(loc='upper left')
-
 
 fig = plt.figure(6)
 fig.suptitle('Leverarm', fontsize=30)
@@ -211,7 +212,6 @@ plt.plot(diff_spd, 'b', label = 'spd - map')
 plt.xlabel('stamp')
 plt.ylabel('deg')
 plt.legend(loc='upper left')
-
 print 'average of (ins -map): ', format(np.mean(diff_ins), '.4f')
 print 'average of (spd -map): ', format(np.mean(diff_spd), '.4f')
 

@@ -1,4 +1,3 @@
-
 # #!/usr/bin/env python
 
 # analyze the relationship between postion deviation and yaw offset
@@ -11,12 +10,14 @@ from gnss_transformer import GPSTransformer
 
 
 class IMUAnalyzer:
-    def __init__(self, info, flag):
+    def __init__(self, info):
+        # test bag's info
         parser = DataParser(info)
         self.file_name = info['bag_name']
         self.ts_begin = info['ts_begin']
         self.ts_end = info['ts_end']
 
+        # LLH to ENU base point
         self.base_lat = 32.75707  # center between tucson and phoenix
         self.base_lon = -111.55757
 
@@ -25,15 +26,17 @@ class IMUAnalyzer:
         self.octopus_gnss_trans.set_base(self.base_lat, self.base_lon)
         self.wiki_gnss_trans.set_base(self.base_lat, self.base_lon)
 
-        # get bestpos, insspd, inspvax from dataset
+        # get corrimudata, bestpos, insspd, inspvax from dataset
         # get ros message data
         corrimu_data1, bestpos_data1, spd_data1, ins_data1 = parser.parse_all()
         imu1 = {'corrimu': corrimu_data1, 'bestpos': bestpos_data1,
                 'ins': ins_data1, 'spd': spd_data1}
 
+        # warp data
         self.data1 = self.data_warp(imu1)
         self.analysis()
 
+    # print analytical result
     def analysis(self):
         print '******BENCHMARK*********'
         items = ['x_acc', 'y_acc', 'z_acc',
@@ -68,7 +71,8 @@ class IMUAnalyzer:
         hdmap = {'x': [], 'y': [], 'yaw': []}
         data = {'corrimu': corrimu, 'bestpos': bestpos,
                 'ins': ins, 'spd': spd, 'offset': offset, 'pos': pos, 'map': hdmap}
-        
+
+        # self.data_list = {'corrimu': [], 'bestpos':[], 'ins':[], 'spd':[], 'offset':[], 'pos':[], 'map':[]}
         data_rate = 125  # IMU-IGM-S1
         for msg in imu['corrimu']:
             pc_time = float(str(msg.header2.stamp.secs)) \
@@ -205,20 +209,10 @@ class IMUAnalyzer:
             delta_x, delta_y = enu_pt[0], enu_pt[1]
             data['map']['yaw'].append(np.rad2deg(np.arctan2(delta_x, delta_y)))
 
-        # one base, llh2enu
-        # for xy in wiki_xy:
-        #     data['map']['x'].append(xy[0])
-        #     data['map']['y'].append(xy[1])
-        # data['map']['x'] = np.array(data['map']['x'])
-        # data['map']['y'] = np.array(data['map']['y'])
-        # data['map']['yaw'] = np.rad2deg(np.arctan2(
-        #     data['map']['x'][1:] - data['map']['x'][:-1], data['map']['y'][1:] - data['map']['y'][:-1]))
-
         for i in range(len(data['map']['yaw']) - 1):
             if abs(data['map']['yaw'][i]) == 0:
                 data['map']['yaw'][i] = min(
                     data['map']['yaw'][i - 1], data['map']['yaw'][i + 1])
-
         data['map']['yaw'] = np.append(
             data['map']['yaw'], data['map']['yaw'][-1])
         data['map']['yaw'] += 360
@@ -237,7 +231,6 @@ class IMUAnalyzer:
         x_offset = abs(C1 - C2) / np.sqrt(A ** 2 + B ** 2)
         y_offset = np.sqrt(abs_offset**2 - x_offset ** 2)
         return x_offset, y_offset
-
 
 if __name__ == '__main__':
     bag_name = '2018-05-16-15-43-19'
