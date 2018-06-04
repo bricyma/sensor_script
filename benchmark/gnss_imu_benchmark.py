@@ -7,7 +7,7 @@ import numpy as np
 from tsmap import TSMap, Lane, Point3d, Bound, latlon2xy
 from transformation_util import GNSSTransformer
 from gnss_transformer import GPSTransformer
-
+import json
 
 class IMUAnalyzer:
     def __init__(self, info):
@@ -25,6 +25,11 @@ class IMUAnalyzer:
         self.wiki_gnss_trans = GPSTransformer()
         self.octopus_gnss_trans.set_base(self.base_lat, self.base_lon)
         self.wiki_gnss_trans.set_base(self.base_lat, self.base_lon)
+
+        # TODO
+        self.data_matrix = {'x_acc', 'y_acc', 'z_acc', 'pitch_rate', 'roll_rate', 'yaw_rate'}
+        # std, mean, change rate
+
 
         # get corrimudata, bestpos, insspd, inspvax from dataset
         # get ros message data
@@ -58,9 +63,11 @@ class IMUAnalyzer:
         print 'mean of pos x offset: ', format(np.mean(self.data1['pos']['x']), '.4f')
         print 'mean of pos y offset: ', format(np.mean(self.data1['pos']['y']), '.3f')
 
+    # TODO
     # check parameter satisfies standard
-    # def check_data():
-
+    def check_data():
+        with open('conf.json') as f:
+            data = json.load(f)
 
     def data_warp(self, imu):
         pos = {'x': [], 'y': []}
