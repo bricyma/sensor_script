@@ -19,9 +19,13 @@ class IMUAnalyzer:
         self.ts_begin = info['ts_begin']
         self.ts_end = info['ts_end']
 
-        # LLH to ENU base point, also the base point of Hdmap
-        self.base_lat = 32.75707  # center between tucson and phoenix
-        self.base_lon = -111.55757
+        with open('conf.json') as f:
+            config = json.load(f)
+            # LLH to ENU base point, also the base point of Hdmap
+            self.base_lat, self.base_lon = config['base_point'][0], config['base_point'][1]
+            self.map_file = config['hdmap_file']
+            self.start_lat, self.start_lon = config['start_point'][0], config['start_point'][1]
+            self.end_lat, self.end_lon = config['end_point'][0], config['end_point'][1]
 
         self.octopus_gnss_trans = GNSSTransformer()
         self.wiki_gnss_trans = GPSTransformer()
@@ -43,6 +47,8 @@ class IMUAnalyzer:
         # warp data
         self.data1 = self.data_warp(imu1)
         self.analysis()
+        if config['mode'] == 'test':    
+            self.check_data() 
 
     # print analytical result
     def analysis(self):
@@ -82,34 +88,44 @@ class IMUAnalyzer:
         self.matrix['mean']['t_gps'] = format(np.mean(delta_t_gps), '.6f')
 
         for category in self.matrix:
-            print category
             for item in self.matrix_keys:
+                self.matrix[category][item] = float(
+                    self.matrix[category][item])
                 # print self.matrix[category][item]
-                pass
-        # print '*******LEVERARM CALIBRATION********'
-        # print 'mean of x offset: ', format(np.mean(self.data1['offset']['x']), '.4f')
-        # print 'mean of y offset: ', format(np.mean(self.data1['offset']['y']), '.4f')
-        # print '*******POSITION OFFSET*********'
-        # print 'mean of pos x offset: ', format(np.mean(self.data1['pos']['x']), '.4f')
-        # print 'mean of pos y offset: ', format(np.mean(self.data1['pos']['y']), '.4f')
-        # print '*******CALIBRATION VEHICLEBODYROTATION**********'
+        print '*******LEVERARM CALIBRATION********'
+        print 'mean of x offset: ', format(np.mean(self.data1['offset']['x']), '.4f')
+        print 'mean of y offset: ', format(np.mean(self.data1['offset']['y']), '.4f')
+        print '*******POSITION OFFSET*********'
+        print 'mean of pos x offset: ', format(np.mean(self.data1['pos']['x']), '.4f')
+        print 'mean of pos y offset: ', format(np.mean(self.data1['pos']['y']), '.4f')
+        print '*******CALIBRATION VEHICLEBODYROTATION**********'
         diff = self.data1['ins']['yaw'] - self.data1['spd']['yaw']
         diff[abs(diff) > 1] = 0
-        # print 'mean of (ins yaw - spd yaw): ', format(np.mean(diff), '.6f')
+        print 'mean of (ins yaw - spd yaw): ', format(np.mean(diff), '.6f')
         diff_ins = self.data1['ins']['yaw'] - self.data1['map']['yaw']
         diff_spd = self.data1['spd']['yaw'] - self.data1['map']['yaw']
         # filter
         diff_ins[abs(diff_ins) > 1] = 0
         diff_spd[abs(diff_spd) > 1] = 0
-        # print 'average of (ins -map): ', format(np.mean(diff_ins), '.4f')
-        # print 'average of (spd -map): ', format(np.mean(diff_spd), '.4f')
+        print 'average of (ins -map): ', format(np.mean(diff_ins), '.4f')
+        print 'average of (spd -map): ', format(np.mean(diff_spd), '.4f')
 
-    # TODO
-    # check parameter satisfies standard
-    def check_data():
+    # check GNSS/INS's output in benchmark
+    def check_data(self):
         with open('conf.json') as f:
             data = json.load(f)
+        for item in self.matrix_keys:
+            range_min = data['benchmark']['value'][item] - \
+                3 * data['benchmark']['std'][item]
+            range_max = data['benchmark']['value'][item] + \
+                3 * data['benchmark']['std'][item]
+            if range_min <= self.matrix['std'][item] <= range_max:
+                print item, 'is ok'
+            else:
+                print item, ' :', self.matrix['std'][item], ' is out of the range (', range_min, ', ', range_max, ')'
 
+
+    # warp data from ros message
     def data_warp(self, imu):
         pos = {'x': [], 'y': []}
         offset = {'x': [], 'y': []}
@@ -192,18 +208,17 @@ class IMUAnalyzer:
         # Obtain data in the chosen route
         # find data between start: (32.146004, -110.893713) to end: (32.246111, -110.990079)
         # Tucson => Phoneix
-        start_lat, start_lon = 32.146004, -110.893713
-        end_lat, end_lon = 32.246111, -110.990079
+
         selected_id = []
         for i in range(len(data['ins']['lat'])):
-            if start_lat < data['ins']['lat'][i] < end_lat and end_lon < data['ins']['lon'][i] < start_lon \
+            if self.start_lat < data['ins']['lat'][i] < self.end_lat and self.end_lon < data['ins']['lon'][i] < self.start_lon \
                     and (270 < data['ins']['yaw'][i] < 360 or 0 < data['ins']['yaw'][i] < 10):
                 selected_id.append(i)
         selected_id = np.array(selected_id)
         if len(selected_id) == 0:
             return
-        else:
-            print 'length of benchmark: ', len(selected_id)
+        elif len(selected_id) < 25000:
+            print 'The number of test data is smaller than the expected, check the start and end point of trip!'
         for topic in data:
             for item in data[topic]:
                 if len(data[topic][item]) > 0:
@@ -228,8 +243,7 @@ class IMUAnalyzer:
 
     # distance between INSPVAX and HDmap lane center
     def check_pos(self, data):
-        map_file = "I-10_Tucson2Phoenix_20180412.hdmap"
-        with open(map_file, 'rb') as f:
+        with open(self.map_file, 'rb') as f:
             submap = f.read()
         hdmap = TSMap(submap)
         x1, y1 = data['bestpos']['x'], data['bestpos']['y']
@@ -289,10 +303,3 @@ class IMUAnalyzer:
         y_offset = np.sqrt(abs_offset**2 - x_offset ** 2)
         return x_offset, y_offset
 
-
-if __name__ == '__main__':
-    bag_name = '2018-05-16-15-43-19'
-    ts_begin = '0:59'
-    ts_end = '100:01'
-    info = {'bag_name': bag_name, 'ts_begin': ts_begin, 'ts_end': ts_end}
-    analyzer = IMUAnalyzer(info, 1)

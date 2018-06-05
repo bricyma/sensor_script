@@ -1,33 +1,35 @@
 {
-    "bag_names": ["2018-05-15-18-35-16",
-    		"2018-05-16-10-54-03", 
-    		"2018-05-21-11-17-12", 
-    		"2018-05-21-16-15-06",  
-    		"2018-05-23-13-36-28"
+    "vehicle": "B2",
+    "mode": "test", 
+    "bag_names": ["2018-05-23-13-36-28"
        			],   
     "hdmap_file": "I-10_Tucson2Phoenix_20180412.hdmap",
+    "base_point": [32.75707, -111.55757],
+    "start_point": [32.146004, -110.893713],
+    "end_point": [32.246111, -110.990079],
     "benchmark": {
-    	"std": {
-    		"acc_x":1,
-    		"acc_y":1,
-    		"acc_z":1,
-    		"pitch_rate":1,
-    		"roll_rate":1,
-    		"yaw_rate":1,
-    		"yaw_rate_change":1,
-    		"timestamp":1
+    	"value": {
+    		"acc_x":0.7936,
+    		"acc_y":0.3702,
+    		"acc_z":0.4895,
+    		"pitch_rate":0.0174,
+    		"roll_rate":0.0136,
+    		"yaw_rate":0.0122,
+    		"yaw_rate_change":0.0049,
+    		"t_ros":0.0015,
+    		"t_gps":0
     	}, 
-    	"mean": {
-    		"acc_x":1,
-    		"acc_y":1,
-    		"acc_z":1,
-    		"pitch_rate":1,
-    		"roll_rate":1,
-    		"yaw_rate":1,
-    		"yaw_rate_change":1,
-    		"timestamp":1
+    	"std": {
+    		"acc_x":0.0406,
+    		"acc_y":0.0339,
+    		"acc_z":0.0151,
+    		"pitch_rate":0.0013,
+    		"roll_rate":0.0003,
+    		"yaw_rate":0.0002,
+    		"yaw_rate_change":0.00005,
+    		"t_ros":0.000045,
+    		"t_gps":0
     	}
-
     }
 }
 

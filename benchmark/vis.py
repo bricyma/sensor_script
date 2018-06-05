@@ -12,11 +12,12 @@ with open('conf.json') as f:
 
 
 data_matrix = {'acc_x': [], 'acc_y': [], 'acc_z': [], 'pitch_rate': [],
-           'roll_rate': [], 'yaw_rate': [], 'yaw_rate_change': [], 't_ros': [], 't_gps': []}
+               'roll_rate': [], 'yaw_rate': [], 'yaw_rate_change': [], 't_ros': [], 't_gps': []}
 matrix_keys = ['acc_x', 'acc_y', 'acc_z', 'pitch_rate',
-           'roll_rate', 'yaw_rate', 'yaw_rate_change', 't_ros', 't_gps']
+               'roll_rate', 'yaw_rate', 'yaw_rate_change', 't_ros', 't_gps']
 matrix = {'std': data_matrix, 'mean': copy.deepcopy(data_matrix)}
-benchmark = {'std': copy.deepcopy(data_matrix), 'mean': copy.deepcopy(data_matrix)}
+benchmark = {'std': copy.deepcopy(
+    data_matrix), 'mean': copy.deepcopy(data_matrix)}
 
 bag_names = data['bag_names']
 for bag in bag_names:
@@ -31,12 +32,9 @@ for bag in bag_names:
     plt.rc('font', **font)
 
     for category in matrix:
-		for item in matrix[category]:
-			matrix[category][item].append(float(analyzer.matrix[category][item]))
-			if item == 'acc_x' and category == 'std': 
-				print matrix['std']['acc_x'], 'aaa'
-				print matrix['mean']['acc_x'], 'bbb'
-
+        for item in matrix[category]:
+            matrix[category][item].append(
+                float(analyzer.matrix[category][item]))
     # accelration
     fig = plt.figure(1)
     fig.suptitle('Acceleration in 3 axle', fontsize=30)
@@ -227,19 +225,18 @@ for bag in bag_names:
     plt.xlabel('stamp')
     plt.ylabel('t/s')
 
-    if bag == '2018-05-29-14-41-16':
+    if data['mode'] == 'test':
 	    plt.show()
 
-
-for category in matrix:
-   	for item in matrix_keys:
-   		if category == 'std':
-	   		benchmark[category][item] = np.mean(matrix[category][item])
-	   		print 'mean of ', item, '\'s std: ', format(benchmark[category][item], '.4f')
-	   		print 'std of ', item, '\'s std: ', format(np.std(matrix[category][item]), '.6f')
-	   	else:
-			benchmark[category][item] = np.mean(matrix[category][item])
-			print 'mean of ', item, '\'s mean: ', benchmark[category][item]
-	   		print 'std of ', item, '\'s mean: ', format(np.std(matrix[category][item]), '.6f')
-	
-	
+if data['mode'] == 'build':
+    print '\n*******BENCHMARK**********'
+    for category in matrix:
+        for item in matrix_keys:
+            if category == 'std':
+                benchmark[category][item] = np.mean(matrix[category][item])
+                print 'mean of ', item, '\'s std: ', format(benchmark[category][item], '.4f')
+                print 'std of ', item, '\'s std: ', format(np.std(matrix[category][item]), '.6f')
+            else:
+                benchmark[category][item] = np.mean(matrix[category][item])
+                print 'mean of ', item, '\'s mean: ', benchmark[category][item]
+                print 'std of ', item, '\'s mean: ', format(np.std(matrix[category][item]), '.6f')
