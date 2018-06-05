@@ -8,7 +8,6 @@ from dataset_store import Dataset
 
 class DataParser:
     def __init__(self, info):
-        print info
         self.bag_name = info['bag_name']
         self.ts_begin = info['ts_begin']
         self.ts_end = info['ts_end']
@@ -73,13 +72,13 @@ class DataParser:
         corrimu_data1, bestpos_data1, spd_data1, ins_data1 = [], [], [], []
         corrimu_data2, bestpos_data2, spd_data2, ins_data2 = [], [], [], []
         for (ts, corrimu1), (ts, bestpos1), (ts, insspd1), (ts, inspvax1), (ts, corrimu2), (ts, bestpos2), (ts, insspd2), (ts, inspvax2), \
-             in ds.fetch_aligned('/novatel_inner/novatel_data/corrimudata', '/novatel_inner/novatel_data/bestpos', '/novatel_inner/novatel_data/insspd', '/novatel_inner/novatel_data/inspvax', \
-                '/novatel_data/corrimudata', '/novatel_data/bestpos', '/novatel_data/insspd', '/novatel_data/inspvax', \
-                                                                                          ts_begin=self.ts_begin, ts_end=self.ts_end):
+            in ds.fetch_aligned('/novatel_inner/novatel_data/corrimudata', '/novatel_inner/novatel_data/bestpos', '/novatel_inner/novatel_data/insspd', '/novatel_inner/novatel_data/inspvax',
+                                '/novatel_data/corrimudata', '/novatel_data/bestpos', '/novatel_data/insspd', '/novatel_data/inspvax',
+                                ts_begin=self.ts_begin, ts_end=self.ts_end):
             corrimu_data1.append(corrimu1)
             bestpos_data1.append(bestpos1)
             spd_data1.append(insspd1)
-            ins_data1.append(inspvax1) 
+            ins_data1.append(inspvax1)
             corrimu_data2.append(corrimu2)
             bestpos_data2.append(bestpos2)
             spd_data2.append(insspd2)
@@ -90,16 +89,16 @@ class DataParser:
     def parse_pandar(self):
         ds = Dataset.open(self.bag_name)
         pandar_left, pandar_right = [], []
-        for (ts, left), (ts, right) in ds.fetch_aligned('/lidar_left/pandar_packets', '/lidar_right/pandar_packets', ts_begin = self.ts_begin, ts_end = self.ts_end):
+        for (ts, left), (ts, right) in ds.fetch_aligned('/lidar_left/pandar_packets', '/lidar_right/pandar_packets', ts_begin=self.ts_begin, ts_end=self.ts_end):
             pandar_left.append(left)
             pandar_right.append(right)
-        return pandar_left, pandar_right          
+        return pandar_left, pandar_right
 
-    # parse vehiclebodyrotation 
+    # parse vehiclebodyrotation
     def parse_rotation(self):
         ds = Dataset.open(self.bag_name)
         ins_data, rvb_data = [], []
-        for (ts, rvb), (ts, ins) in ds.fetch_aligned('/novatel_data/vehiclebodyrotation', '/novatel_data/inspvax', ts_begin = self.ts_begin, ts_end = self.ts_end):
+        for (ts, rvb), (ts, ins) in ds.fetch_aligned('/novatel_data/vehiclebodyrotation', '/novatel_data/inspvax', ts_begin=self.ts_begin, ts_end=self.ts_end):
             rvb_data.append(rvb)
             ins_data.append(ins)
-        return ins_data, rvb_data    
+        return ins_data, rvb_data

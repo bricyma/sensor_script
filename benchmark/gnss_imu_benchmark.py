@@ -8,6 +8,8 @@ from tsmap import TSMap, Lane, Point3d, Bound, latlon2xy
 from transformation_util import GNSSTransformer
 from gnss_transformer import GPSTransformer
 import json
+import copy
+
 
 class IMUAnalyzer:
     def __init__(self, info):
@@ -17,7 +19,7 @@ class IMUAnalyzer:
         self.ts_begin = info['ts_begin']
         self.ts_end = info['ts_end']
 
-        # LLH to ENU base point
+        # LLH to ENU base point, also the base point of Hdmap
         self.base_lat = 32.75707  # center between tucson and phoenix
         self.base_lon = -111.55757
 
@@ -26,10 +28,11 @@ class IMUAnalyzer:
         self.octopus_gnss_trans.set_base(self.base_lat, self.base_lon)
         self.wiki_gnss_trans.set_base(self.base_lat, self.base_lon)
 
-        # TODO
-        self.data_matrix = {'x_acc', 'y_acc', 'z_acc', 'pitch_rate', 'roll_rate', 'yaw_rate'}
-        # std, mean, change rate
-
+        data_matrix = {'acc_x': [], 'acc_y': [], 'acc_z': [], 'pitch_rate': [],
+                       'roll_rate': [], 'yaw_rate': [], 'yaw_rate_change': [], 't_ros': [], 't_gps': []}
+        self.matrix_keys = ['acc_x', 'acc_y', 'acc_z', 'pitch_rate',
+                            'roll_rate', 'yaw_rate', 'yaw_rate_change', 't_ros', 't_gps']
+        self.matrix = {'std': data_matrix, 'mean': copy.deepcopy(data_matrix)}
 
         # get corrimudata, bestpos, insspd, inspvax from dataset
         # get ros message data
@@ -43,25 +46,63 @@ class IMUAnalyzer:
 
     # print analytical result
     def analysis(self):
+        print '\n'
+        print self.file_name
         print '******BENCHMARK*********'
-        items = ['x_acc', 'y_acc', 'z_acc',
+        items = ['acc_x', 'acc_y', 'acc_z',
                  'pitch_rate', 'roll_rate', 'yaw_rate']
-        for item in items:
-            print 'std of ' + item, format(np.std(self.data1['corrimu'][item]), '.3f')
-            print 'mean of ' + item, format(np.mean(self.data1['corrimu'][item]), '.3f')
-        
         orientation = ['pitch', 'roll', 'yaw']
+        for item in items:
+            self.matrix['std'][item] = format(
+                np.std(self.data1['corrimu'][item]), '.6f')
+            self.matrix['mean'][item] = format(
+                np.mean(self.data1['corrimu'][item]), '.6f')
         for item in orientation:
-            print 'std of ' + item, format(np.std(self.data1['ins'][item]), '.3f')
-            print 'mean of ' + item, format(np.mean(self.data1['ins'][item]), '.3f')
-       
-        print '*******LEVERARM CALIBRATION********'
-        print 'mean of x offset: ', format(np.mean(self.data1['offset']['x']), '.4f')
-        print 'mean of y offset: ', format(np.mean(self.data1['offset']['y']), '.3f')
-        
-        print '*******POSITION OFFSET*********'
-        print 'mean of pos x offset: ', format(np.mean(self.data1['pos']['x']), '.4f')
-        print 'mean of pos y offset: ', format(np.mean(self.data1['pos']['y']), '.3f')
+            self.matrix['std'][item] = format(
+                np.std(self.data1['ins'][item]), '.6f')
+            self.matrix['mean'][item] = format(
+                np.mean(self.data1['ins'][item]), '.6f')
+
+        # delta yaw rate
+        yaw_rate_chagne = self.data1['corrimu']['yaw_rate'][1:] - \
+            self.data1['corrimu']['yaw_rate'][:-1]
+        self.matrix['std']['yaw_rate_change'] = format(
+            np.std(yaw_rate_chagne), '.6f')
+        self.matrix['mean']['yaw_rate_change'] = format(
+            np.mean(yaw_rate_chagne), '.6f')
+
+        # ros timestamp and gps timestamp
+        delta_t_ros = self.data1['ins']['t_ros'][1:] - \
+            self.data1['ins']['t_ros'][:-1]
+        delta_t_gps = self.data1['ins']['t_gps'][1:] - \
+            self.data1['ins']['t_gps'][:-1]
+        self.matrix['std']['t_ros'] = format(np.std(delta_t_ros), '.6f')
+        self.matrix['std']['t_gps'] = format(np.std(delta_t_gps), '.6f')
+        self.matrix['mean']['t_ros'] = format(np.mean(delta_t_ros), '.6f')
+        self.matrix['mean']['t_gps'] = format(np.mean(delta_t_gps), '.6f')
+
+        for category in self.matrix:
+            print category
+            for item in self.matrix_keys:
+                # print self.matrix[category][item]
+                pass
+        # print '*******LEVERARM CALIBRATION********'
+        # print 'mean of x offset: ', format(np.mean(self.data1['offset']['x']), '.4f')
+        # print 'mean of y offset: ', format(np.mean(self.data1['offset']['y']), '.4f')
+        # print '*******POSITION OFFSET*********'
+        # print 'mean of pos x offset: ', format(np.mean(self.data1['pos']['x']), '.4f')
+        # print 'mean of pos y offset: ', format(np.mean(self.data1['pos']['y']), '.4f')
+        # print '*******CALIBRATION VEHICLEBODYROTATION**********'
+        diff = self.data1['ins']['yaw'] - self.data1['spd']['yaw']
+        diff[abs(diff) > 1] = 0
+        # print 'mean of (ins yaw - spd yaw): ', format(np.mean(diff), '.6f')
+        diff_ins = self.data1['ins']['yaw'] - self.data1['map']['yaw']
+        diff_spd = self.data1['spd']['yaw'] - self.data1['map']['yaw']
+        # filter
+        diff_ins[abs(diff_ins) > 1] = 0
+        diff_spd[abs(diff_spd) > 1] = 0
+        # print 'average of (ins -map): ', format(np.mean(diff_ins), '.4f')
+        # print 'average of (spd -map): ', format(np.mean(diff_spd), '.4f')
 
     # TODO
     # check parameter satisfies standard
@@ -72,13 +113,13 @@ class IMUAnalyzer:
     def data_warp(self, imu):
         pos = {'x': [], 'y': []}
         offset = {'x': [], 'y': []}
-        corrimu = {'t': [], 'x_acc': [], 'y_acc': [], 'z_acc': [],
+        corrimu = {'t_ros': [], 'acc_x': [], 'acc_y': [], 'acc_z': [],
                    'pitch_rate': [], 'roll_rate': [], 'yaw_rate': []}
-        bestpos = {'x': [], 'y': [], 't': [],
+        bestpos = {'x': [], 'y': [], 't_ros': [],
                    'diff_age': [], 'status': [], 'sol_age': []}
         ins = {'lat': [], 'lon': [], 'pitch': [], 'roll': [], 'x': [], 'y': [], 'yaw': [],
-               't': [], 't_gps': [], 'lat_std': [], 'lon_std': [], 'status': []}
-        spd = {'yaw': [], 't': [], 't_gps': []}
+               't_ros': [], 't_gps': [], 'lat_std': [], 'lon_std': [], 'status': []}
+        spd = {'yaw': [], 't_ros': [], 't_gps': []}
         hdmap = {'x': [], 'y': [], 'yaw': []}
         data = {'corrimu': corrimu, 'bestpos': bestpos,
                 'ins': ins, 'spd': spd, 'offset': offset, 'pos': pos, 'map': hdmap}
@@ -89,10 +130,10 @@ class IMUAnalyzer:
             pc_time = float(str(msg.header2.stamp.secs)) \
                 + float(str(msg.header2.stamp.nsecs)) * \
                 1e-9  # epoch second
-            data['corrimu']['t'].append(pc_time)
-            data['corrimu']['x_acc'].append(msg.x_accel * data_rate)
-            data['corrimu']['y_acc'].append(msg.y_accel * data_rate)
-            data['corrimu']['z_acc'].append(msg.z_accel * data_rate)
+            data['corrimu']['t_ros'].append(pc_time)
+            data['corrimu']['acc_x'].append(msg.x_accel * data_rate)
+            data['corrimu']['acc_y'].append(msg.y_accel * data_rate)
+            data['corrimu']['acc_z'].append(msg.z_accel * data_rate)
             data['corrimu']['pitch_rate'].append(msg.pitch_rate * data_rate)
             data['corrimu']['roll_rate'].append(msg.roll_rate * data_rate)
             data['corrimu']['yaw_rate'].append(msg.yaw_rate * data_rate)
@@ -105,17 +146,18 @@ class IMUAnalyzer:
                 + float(msg.header.gps_week_seconds) / \
                 1000 - 18  # GPS time to epoch second
             data['spd']['yaw'].append(msg.track_ground)
-            data['spd']['t'].append(pc_time)
+            data['spd']['t_ros'].append(pc_time)
             data['spd']['t_gps'].append(novatel_time)
         for msg in imu['bestpos']:
             pc_time = float(str(msg.header2.stamp.secs)) \
                 + float(str(msg.header2.stamp.nsecs)) * \
                 1e-9  # epoch second
-            enu_pt = self.octopus_gnss_trans.latlon2xy(np.array([msg.latitude, msg.longitude]))
+            enu_pt = self.octopus_gnss_trans.latlon2xy(
+                np.array([msg.latitude, msg.longitude]))
             x, y = enu_pt[0], enu_pt[1]
             data['bestpos']['x'].append(x)
             data['bestpos']['y'].append(y)
-            data['bestpos']['t'].append(pc_time)
+            data['bestpos']['t_ros'].append(pc_time)
             data['bestpos']['diff_age'].append(msg.diff_age)
             data['bestpos']['sol_age'].append(msg.sol_age)
             data['bestpos']['status'].append(msg.position_type)
@@ -126,7 +168,8 @@ class IMUAnalyzer:
             novatel_time = 315964800 + msg.header.gps_week * 7 * 24 * 60 * 60 \
                 + float(msg.header.gps_week_seconds) / \
                 1000 - 18  # GPS time to epoch second
-            enu_pt = self.octopus_gnss_trans.latlon2xy(np.array([msg.latitude, msg.longitude]))
+            enu_pt = self.octopus_gnss_trans.latlon2xy(
+                np.array([msg.latitude, msg.longitude]))
             x, y = enu_pt[0], enu_pt[1]
             data['ins']['x'].append(x)
             data['ins']['y'].append(y)
@@ -135,7 +178,7 @@ class IMUAnalyzer:
             data['ins']['yaw'].append(msg.azimuth)
             data['ins']['roll'].append(msg.roll)
             data['ins']['pitch'].append(msg.pitch)
-            data['ins']['t'].append(pc_time)
+            data['ins']['t_ros'].append(pc_time)
             data['ins']['t_gps'].append(novatel_time)
             data['ins']['lat_std'].append(msg.latitude_std)
             data['ins']['lon_std'].append(msg.longitude_std)
@@ -157,6 +200,10 @@ class IMUAnalyzer:
                     and (270 < data['ins']['yaw'][i] < 360 or 0 < data['ins']['yaw'][i] < 10):
                 selected_id.append(i)
         selected_id = np.array(selected_id)
+        if len(selected_id) == 0:
+            return
+        else:
+            print 'length of benchmark: ', len(selected_id)
         for topic in data:
             for item in data[topic]:
                 if len(data[topic][item]) > 0:
@@ -182,7 +229,6 @@ class IMUAnalyzer:
     # distance between INSPVAX and HDmap lane center
     def check_pos(self, data):
         map_file = "I-10_Tucson2Phoenix_20180412.hdmap"
-        # map_file = "I-10_Phoenix2Tucson_20180412.hdmap"
         with open(map_file, 'rb') as f:
             submap = f.read()
         hdmap = TSMap(submap)
@@ -242,6 +288,7 @@ class IMUAnalyzer:
         x_offset = abs(C1 - C2) / np.sqrt(A ** 2 + B ** 2)
         y_offset = np.sqrt(abs_offset**2 - x_offset ** 2)
         return x_offset, y_offset
+
 
 if __name__ == '__main__':
     bag_name = '2018-05-16-15-43-19'
