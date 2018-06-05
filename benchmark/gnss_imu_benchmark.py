@@ -204,11 +204,6 @@ class IMUAnalyzer:
             for item in data[topic]:
                 if topic is not 'map':
                     data[topic][item] = np.array(data[topic][item])
-
-        # Obtain data in the chosen route
-        # find data between start: (32.146004, -110.893713) to end: (32.246111, -110.990079)
-        # Tucson => Phoneix
-
         selected_id = []
         for i in range(len(data['ins']['lat'])):
             if self.start_lat < data['ins']['lat'][i] < self.end_lat and self.end_lon < data['ins']['lon'][i] < self.start_lon \
@@ -223,7 +218,6 @@ class IMUAnalyzer:
             for item in data[topic]:
                 if len(data[topic][item]) > 0:
                     data[topic][item] = data[topic][item][selected_id]
-
         x_offset, y_offset = self.calculate_offset(data)
         # leverarm check
         data['offset']['x'], data['offset']['y'] = x_offset, y_offset
@@ -259,17 +253,14 @@ class IMUAnalyzer:
             x2.append(ref_p.x)
             y2.append(ref_p.y)
             xy.append([ref_p.x, ref_p.y])
-
         # get the distance between lane center and bestpos
         x2, y2 = np.array(x2), np.array(y2)
         x_offset, y_offset = self.get_distance(
             x1, y1, x2, y2, data['ins']['yaw'])
-
         # yaw angle of map's lane
         xy = np.array(xy)
         ll = self.octopus_gnss_trans.xy2latlon(xy)
         # wiki_xy = self.wiki_gnss_trans.latlon2xy(ll)
-
         for i in range(len(ll) - 1):
             lat, lon = ll[i][0], ll[i][1]
             lat2, lon2 = ll[i + 1][0], ll[i + 1][1]
@@ -291,6 +282,7 @@ class IMUAnalyzer:
 
     # input: x1, y1, x2, y2, yaw
     # output: x offset, y offset
+    # solution: get the distance between two parallel lines 
     def get_distance(self, x1, y1, x2, y2, yaw):
         abs_offset = np.sqrt((x1 - x2)**2 + (y1 - y2)**2)
         k = np.tan(np.deg2rad(90 - yaw))
